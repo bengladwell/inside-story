@@ -1,11 +1,11 @@
 import React from 'react'
-import { Link } from 'gatsby'
+import { graphql, Link } from 'gatsby'
 
 import Layout from '../components/layout'
 import Image from '../components/image'
 import SEO from '../components/seo'
 
-const IndexPage = () => (
+const IndexPage = ({ data }) => (
   <Layout>
     <SEO title='Home' />
     <h1>Hi people</h1>
@@ -15,7 +15,27 @@ const IndexPage = () => (
       <Image />
     </div>
     <Link to='/page-2/'>Go to page 2</Link>
+
+    {data.allVideosYaml.edges.map(({ node: { id, fields: { slug, label } } }) => (
+      <Link key={id} to={slug}>{label}</Link>
+    ))}
   </Layout>
 )
+
+export const query = graphql`
+  query {
+    allVideosYaml {
+      edges {
+        node {
+          id
+          fields {
+            slug
+            label
+          }
+        }
+      }
+    }
+  }
+`
 
 export default IndexPage

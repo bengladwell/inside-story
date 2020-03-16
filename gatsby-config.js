@@ -13,6 +13,15 @@ module.exports = {
         path: `${__dirname}/src/images`
       }
     },
+    'gatsby-plugin-lodash',
+    'gatsby-transformer-yaml',
+    {
+      resolve: 'gatsby-source-filesystem',
+      options: {
+        name: 'data',
+        path: './src/data/'
+      }
+    },
     'gatsby-transformer-sharp',
     'gatsby-plugin-sharp',
     {
