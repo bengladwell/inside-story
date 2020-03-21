@@ -1,6 +1,8 @@
 - dir: 2011-Mesfin-Year-2
   base_name: 2011_Mesfin_Two_Years_Old
   label: Mesfin Year 2
+  year: 2011
 - dir: 2011-Hudson-Year-3
   base_name: 2010_Hudson_Two_Years_Old
   label: Hudson Year 3
+  year: 2011

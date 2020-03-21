@@ -14,6 +14,7 @@ exports.onCreateNode = ({ node, actions }) => {
     createNodeField({ node, name: 'dir', value: node.dir })
     createNodeField({ node, name: 'baseName', value: node.base_name })
     createNodeField({ node, name: 'label', value: node.label })
+    createNodeField({ node, name: 'year', value: node.year })
     createNodeField({ node, name: 'slug', value: _.kebabCase(node.label) })
   }
 }
@@ -28,6 +29,7 @@ exports.createPages = async ({ graphql, actions }) => {
             fields {
               slug
               label
+              year
               dir
               baseName
             }
