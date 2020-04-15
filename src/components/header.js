@@ -7,7 +7,6 @@ const Header = ({ siteTitle }) => (
   <header
     className='site-header'
     style={{
-      // background: 'rebeccapurple',
       marginBottom: '1.45rem'
     }}
   >
@@ -15,22 +14,19 @@ const Header = ({ siteTitle }) => (
       style={{
         margin: '0 auto',
         maxWidth: 960
-        // padding: `${rhythm(0.9)} ${rhythm(0.69)}`
       }}
     >
-      <h1 style={{ margin: 0 }}>
-        <Link
-          title={siteTitle}
-          to='/'
-          style={{
-            color: 'white',
-            textDecoration: 'none'
-            // ...scale(0.2)
-          }}
-        >
-          G
-        </Link>
-      </h1>
+      <Link
+        className='logo'
+        title={siteTitle}
+        to='/'
+        style={{
+          color: 'white',
+          textDecoration: 'none'
+        }}
+      >
+        G
+      </Link>
     </div>
   </header>
 )

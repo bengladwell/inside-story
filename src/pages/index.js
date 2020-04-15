@@ -1,9 +1,9 @@
 import React from 'react'
 import { graphql, Link } from 'gatsby'
+import Img from 'gatsby-image'
 import PropTypes from 'prop-types'
 
 import Layout from '../components/layout'
-import Image from '../components/image'
 import SEO from '../components/seo'
 
 const IndexPage = ({ data }) => {
@@ -11,7 +11,8 @@ const IndexPage = ({ data }) => {
     id: edge.node.id,
     label: edge.node.fields.label,
     slug: edge.node.fields.slug,
-    year: edge.node.fields.year
+    year: edge.node.fields.year,
+    image: data.allFile.edges.find(fileEdge => fileEdge.node.base === edge.node.fields.image)
   }))
   const firstVideo = videos[0]
   const lastVideo = [...videos].pop()
@@ -20,15 +21,10 @@ const IndexPage = ({ data }) => {
     <Layout>
       <SEO title='Home' />
       <h1>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
-      <p>Welcome to your new Gatsby site.</p>
-      <p>Now go build something great.</p>
-      <div style={{ maxWidth: '300px', marginBottom: '1.45rem' }}>
-        <Image />
-      </div>
 
       <ul>
-        {videos.map(({ id, slug, label }) => (
-          <li key={id}><Link to={slug}>{label}</Link></li>
+        {videos.map(({ id, slug, label, image }) => (
+          <li key={id}><Img fluid={image.node.childImageSharp.fluid} /><Link to={slug}>{label}</Link></li>
         ))}
       </ul>
     </Layout>
@@ -45,6 +41,19 @@ export const query = graphql`
             slug
             label
             year
+            image
+          }
+        }
+      }
+    }
+    allFile(filter: {extension: {eq: "jpg"}}) {
+      edges {
+        node {
+          base
+          childImageSharp {
+            fluid(maxWidth: 300) {
+              ...GatsbyImageSharpFluid
+            }
           }
         }
       }
@@ -62,6 +71,22 @@ IndexPage.propTypes = {
             slug: PropTypes.string.isRequired,
             label: PropTypes.string.isRequired,
             year: PropTypes.number.isRequired
+          })
+        })
+      }))
+    }),
+    allFile: PropTypes.shape({
+      edges: PropTypes.arrayOf(PropTypes.shape({
+        node: PropTypes.shape({
+          base: PropTypes.string.isRequired,
+          childImageSharp: PropTypes.shape({
+            fluid: PropTypes.shape({
+              aspectRatio: PropTypes.number.isRequired,
+              base64: PropTypes.string.isRequired,
+              sizes: PropTypes.string.isRequired,
+              src: PropTypes.string.isRequired,
+              srcSet: PropTypes.string.isRequired
+            })
           })
         })
       }))
