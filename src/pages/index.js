@@ -24,7 +24,7 @@ const IndexPage = ({ data }) => {
 
       <ul>
         {videos.map(({ id, slug, label, image }) => (
-          <li key={id}><Img fluid={image.node.childImageSharp.fluid} /><Link to={slug}>{label}</Link></li>
+          <li key={id}><Img fluid={image.node.childImageSharp.fluid} /><Link to={`/${slug}`}>{label}</Link></li>
         ))}
       </ul>
     </Layout>
