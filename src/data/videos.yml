@@ -1,15 +1,15 @@
-- dir: 2012-Hudson-Year-4
-  base_name: 2012_Hudson_Year_4
-  label: Hudson Year 4
-  year: 2012
-  image: serious-dog.jpg
-- dir: 2011-Mesfin-Year-2
-  base_name: 2011_Mesfin_Two_Years_Old
-  label: Mesfin Year 2
+- dir: 2019-Hudson-Year-11
+  base_name: 2019_Hudson_Year_11
+  label: Hudson Year 11
   year: 2011
-  image: happy-dog.jpg
-- dir: 2011-Hudson-Year-3
-  base_name: 2010_Hudson_Two_Years_Old
-  label: Hudson Year 3
-  year: 2011
-  image: silly-dog.jpg
+  image: Hudson_Year_11.jpg
+- dir: 2019-Mesfin-Year-10
+  base_name: 2019_Mesfin_Year_10
+  label: Mesfin Year 10
+  year: 2019
+  image: Mesfin_Year_10.jpg
+- dir: 2020-Hudson-Year-12
+  base_name: 2020_Hudson_Year_12
+  label: Hudson Year 12
+  year: 2020
+  image: Hudson_Year_12.jpg
