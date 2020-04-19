@@ -11,8 +11,10 @@ html {
 // }
 body {
   margin: 0;
+  padding: 1em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: $darkest-of-eggplants;
 }
 article,
 aside,
@@ -201,7 +203,7 @@ textarea {
   box-sizing: inherit;
 }
 body {
-  color: hsla(0, 0%, 0%, 0.8);
+  color: $black;
   font-weight: normal;
   word-wrap: break-word;
   font-kerning: normal;
@@ -621,3 +623,7 @@ pre tt:after {
 //     font-size: 100%;
 //   }
 // }
+
+.site-title {
+  color: $white;
+}

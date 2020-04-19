@@ -1,9 +1,9 @@
 import React from 'react'
-import { graphql, Link } from 'gatsby'
-import Img from 'gatsby-image'
+import { graphql } from 'gatsby'
 import PropTypes from 'prop-types'
 
 import Layout from '../components/layout'
+import VideoList from '../components/video_list'
 import SEO from '../components/seo'
 
 const IndexPage = ({ data }) => {
@@ -20,13 +20,10 @@ const IndexPage = ({ data }) => {
   return (
     <Layout>
       <SEO title='Home' />
-      <h1>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
+      <h1 className='site-title'>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
 
-      <ul>
-        {videos.map(({ id, slug, label, image }) => (
-          <li key={id}><Img fluid={image.node.childImageSharp.fluid} /><Link to={`/${slug}`}>{label}</Link></li>
-        ))}
-      </ul>
+      <VideoList videos={videos} />
+
     </Layout>
   )
 }

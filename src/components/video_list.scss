@@ -1,0 +1,20 @@
+@import '../styles/variables';
+
+.video-list {
+  margin: 0;
+  .video {
+    position: relative;
+    img {
+      filter: grayscale(40%);
+    }
+    &__name {
+      position: absolute;
+      bottom: 0;
+      a {
+        color: $white;
+        font-size: 6rem;
+        text-decoration: none;
+      }
+    }
+  }
+}

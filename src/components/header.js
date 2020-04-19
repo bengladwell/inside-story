@@ -4,24 +4,13 @@ import React from 'react'
 import './header.scss'
 
 const Header = ({ siteTitle }) => (
-  <header
-    className='site-header'
-    style={{
-      marginBottom: '1.45rem'
-    }}
-  >
-    <div
-      style={{
-        margin: '0 auto',
-        maxWidth: 960
-      }}
-    >
+  <header className='site-header'>
+    <div>
       <Link
         className='logo'
         title={siteTitle}
         to='/'
         style={{
-          color: 'white',
           textDecoration: 'none'
         }}
       >
