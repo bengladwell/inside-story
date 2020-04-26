@@ -4,16 +4,19 @@
   margin: 0;
   .video {
     position: relative;
+    padding: 1em 0;
     img {
       filter: grayscale(40%);
     }
     &__name {
       position: absolute;
       bottom: 0;
+      text-align: center;
       a {
         color: $white;
         font-size: 6rem;
         text-decoration: none;
+        text-shadow: 1px 1px 2px $darkest-of-eggplants;
       }
     }
   }
