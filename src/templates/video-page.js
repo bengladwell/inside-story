@@ -33,11 +33,11 @@ const VideoPage = ({
         poster={poster}
       >
         <source
-          src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/hls/${baseName}.m3u8`}
+          src={`https://video.bengladwell.com/${baseName}/hls/${baseName}.m3u8`}
           type="application/x-mpegURL"
         />
         <source
-          src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/dash/${baseName}.mpd`}
+          src={`https://video.bengladwell.com/${baseName}/dash/${baseName}.mpd`}
           type="application/dash+xml"
         />
       </VideoPlayer>
