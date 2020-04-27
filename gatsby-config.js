@@ -5,6 +5,12 @@ module.exports = {
     author: '@bengladwell'
   },
   plugins: [
+    {
+      resolve: 'gatsby-plugin-s3',
+      options: {
+        bucketName: 'inside-story'
+      }
+    },
     'gatsby-plugin-sass',
     'gatsby-plugin-react-helmet',
     {
