@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  inside-story built with SAM
+
+Resources:
+  HostingS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: inside-story
+  HostingIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: Inside Story static assets
+  HostingDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt HostingS3Bucket.DomainName
+            Id: S3-inside-story
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${HostingIdentity}'
+        Enabled: True
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - HEAD
+            - GET
+          TargetOriginId: S3-inside-story
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: True
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: True
+        DefaultRootObject: index.html
+        PriceClass: PriceClass_100
