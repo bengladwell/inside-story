@@ -35,3 +35,17 @@ Resources:
           CloudFrontDefaultCertificate: True
         DefaultRootObject: index.html
         PriceClass: PriceClass_100
+  UserPool:
+    Type : AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: Inside Story
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: False
+    # TODO: Looks like I should create an app client
+  # TODO: looks like I need an identity pool that is linked to the UserPool and client
+    # Actually; may not even need that UserPool. Will only need it if actually storing user data there. Could store it
+    #   a "simple table", or directly from Facebook. (maybe the simple table just has the list of approved users)
+    # The identity pool will also need two new roles, one for authenticated, one for unauthenticated
+    # Not sure what the authenticated one will need access to yet
