@@ -7,7 +7,7 @@
   "dependencies": {
     "aws-sdk": "^2.673.0",
     "dotenv": "^8.2.0",
-    "gatsby": "^2.19.7",
+    "gatsby": "^2.22.11",
     "gatsby-image": "^2.2.39",
     "gatsby-plugin-lodash": "^3.1.21",
     "gatsby-plugin-manifest": "^2.2.39",
@@ -21,7 +21,7 @@
     "gatsby-transformer-yaml": "^2.2.26",
     "lodash": "^4.17.15",
     "modularscale-sass": "^3.0.10",
-    "node-sass": "^4.13.1",
+    "node-sass": "^4.14.1",
     "prop-types": "^15.7.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
