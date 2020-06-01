@@ -19,6 +19,7 @@
     "gatsby-source-filesystem": "^2.1.46",
     "gatsby-transformer-sharp": "^2.3.13",
     "gatsby-transformer-yaml": "^2.2.26",
+    "jwt-decode": "^2.2.0",
     "lodash": "^4.17.15",
     "modularscale-sass": "^3.0.10",
     "node-sass": "^4.14.1",

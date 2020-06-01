@@ -5,6 +5,11 @@ import PropTypes from 'prop-types'
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
 import SEO from '../components/seo'
+import Auth from '../services/auth'
+
+if (window.location.hash) {
+  Auth.receive(window.location.hash)
+}
 
 const IndexPage = ({ data }) => {
   const videos = data.allVideosYaml.edges.map(edge => ({
