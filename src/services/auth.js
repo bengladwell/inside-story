@@ -1,3 +1,7 @@
+import CognitoIdentityServiceProvider from 'aws-sdk/clients/cognitoidentityserviceprovider'
+import User from '../models/user'
+import jwtDecode from 'jwt-decode'
+
 class Auth {
   static receive (hashString) {
     window.localStorage.setItem('cognito-user', hashString.substr(1))
@@ -18,6 +22,16 @@ class Auth {
       this.idToken = params.id_token
       this.expiresIn = params.expires_in
     }
+    this.service = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
+  }
+
+  getUser () {
+    if (!this.idToken) {
+      return Promise.resolve()
+    }
+
+    return this.service.getUser({ AccessToken: this.accessToken }).promise()
+      .then(data => User.fromFacebook(data))
   }
 }
 
