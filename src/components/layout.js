@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useStaticQuery, graphql } from 'gatsby'
 
+import { userContext } from '../context'
+import Auth from '../services/auth'
 import Header from './header'
 import './layout.scss'
 
@@ -16,8 +18,17 @@ const Layout = ({ children }) => {
     }
   `)
 
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    const auth = new Auth()
+    auth.getUser()
+      .then(user => setUser(user))
+      .catch(e => console.log(e))
+  }, [])
+
   return (
-    <>
+    <userContext.Provider value={user}>
       <Header siteTitle={data.site.siteMetadata.title} />
       <div
         style={{
@@ -27,7 +38,7 @@ const Layout = ({ children }) => {
       >
         <main>{children}</main>
       </div>
-    </>
+    </userContext.Provider>
   )
 }
 

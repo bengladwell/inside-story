@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { graphql } from 'gatsby'
 import PropTypes from 'prop-types'
 
-import { userContext } from '../context'
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
 import SEO from '../components/seo'
@@ -23,24 +22,13 @@ const IndexPage = ({ data }) => {
   const firstVideo = videos[0]
   const lastVideo = [...videos].pop()
 
-  const [user, setUser] = useState(null)
-
-  useEffect(() => {
-    const auth = new Auth()
-    auth.getUser()
-      .then(user => setUser(user))
-      .catch(e => console.log(e))
-  }, [])
-
   return (
-    <userContext.Provider value={user}>
-      <Layout>
-        <SEO title='Home' />
-        <h1 className='site-title'>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
+    <Layout>
+      <SEO title='Home' />
+      <h1 className='site-title'>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
 
-        <VideoList videos={videos} />
-      </Layout>
-    </userContext.Provider>
+      <VideoList videos={videos} />
+    </Layout>
   )
 }
 
