@@ -22,6 +22,7 @@ const Layout = ({ children }) => {
 
   useEffect(() => {
     const auth = new Auth()
+    auth.authorizeUser().then(resp => console.log(resp))
     auth.getUser()
       .then(user => setUser(user))
       .catch(e => console.log(e))
