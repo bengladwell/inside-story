@@ -3,6 +3,11 @@ import CognitoIdentity from 'aws-sdk/clients/cognitoidentity'
 import User from '../models/user'
 import jwtDecode from 'jwt-decode'
 
+const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
+const cognitoIdentity = new CognitoIdentity({ region: 'us-east-1' })
+const userPool = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_ojhYSduq8'
+const identityPoolId = 'us-east-1:7750fa7b-1fb4-41b3-8a6b-993cc405f7ef'
+
 class Auth {
   static receive (hashString) {
     if (!hashString.match(/error=/)) {
@@ -25,8 +30,6 @@ class Auth {
       this.idToken = params.id_token
       this.expiresIn = params.expires_in
     }
-    this.service = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
-    this.identityService = new CognitoIdentity({ region: 'us-east-1' })
   }
 
   getUser () {
@@ -34,8 +37,17 @@ class Auth {
       return Promise.resolve()
     }
 
-    return this.service.getUser({ AccessToken: this.accessToken }).promise()
+    return cognitoIdentityServiceProvider
+      .getUser({ AccessToken: this.accessToken })
+      .promise()
       .then(data => User.fromFacebook(data))
+      .catch(err => {
+        if (err.message.match(/Token has expired/)) {
+          this.clear()
+        } else {
+          throw err
+        }
+      })
   }
 
   authorizeUser () {
@@ -43,21 +55,36 @@ class Auth {
       return Promise.resolve()
     }
 
-    return this.identityService.getId({
-      IdentityPoolId: 'us-east-1:7750fa7b-1fb4-41b3-8a6b-993cc405f7ef',
+    return cognitoIdentity.getId({
+      IdentityPoolId: identityPoolId,
       Logins: {
-        'cognito-idp.us-east-1.amazonaws.com/us-east-1_ojhYSduq8': this.idToken
+        [userPool]: this.idToken
       }
     })
       .promise()
       .then(({ IdentityId }) => {
-        return this.identityService.getCredentialsForIdentity({
+        return cognitoIdentity.getCredentialsForIdentity({
           IdentityId,
           Logins: {
-            'cognito-idp.us-east-1.amazonaws.com/us-east-1_ojhYSduq8': this.idToken
+            [userPool]: this.idToken
           }
         }).promise()
       })
+      .then(({ Credentials: credentials }) => credentials)
+      .catch(err => {
+        if (err.message.match(/Token expired/)) {
+          this.clear()
+        } else {
+          throw err
+        }
+      })
+  }
+
+  clear () {
+    this.accessToken = undefined
+    this.idToken = undefined
+    this.expiresIn = undefined
+    window.localStorage.removeItem('cognito-user')
   }
 }
 

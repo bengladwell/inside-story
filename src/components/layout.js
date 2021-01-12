@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { useStaticQuery, graphql } from 'gatsby'
+import S3 from 'aws-sdk/clients/s3'
+import videojs from 'video.js'
 
 import { userContext } from '../context'
 import Auth from '../services/auth'
@@ -22,10 +24,33 @@ const Layout = ({ children }) => {
 
   useEffect(() => {
     const auth = new Auth()
-    auth.authorizeUser().then(resp => console.log(resp))
-    auth.getUser()
-      .then(user => setUser(user))
-      .catch(e => console.log(e))
+    Promise.all([
+      auth.authorizeUser(),
+      auth.getUser()
+    ]).then(([authResp, user]) => {
+      if (user) setUser(user)
+      videojs.Vhs.xhr.beforeRequest = (options) => {
+        const uriMatch = options.uri.match(/:\/\/([^.]+).+?\/(.+)/)
+        if (!uriMatch) {
+          return options
+        }
+        const [, bucket, key] = uriMatch
+        const s3 = new S3({
+          apiVersion: 'latest',
+          credentials: {
+            accessKeyId: authResp.AccessKeyId,
+            secretAccessKey: authResp.SecretKey,
+            sessionToken: authResp.SessionToken
+          }
+        })
+        const signedUri = s3.getSignedUrl('getObject', {
+          Bucket: bucket,
+          Key: key
+        })
+        options.uri = signedUri
+        return options
+      }
+    })
   }, [])
 
   return (
