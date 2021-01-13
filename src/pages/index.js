@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { graphql } from 'gatsby'
 import PropTypes from 'prop-types'
 
@@ -19,14 +19,18 @@ const IndexPage = ({ data }) => {
     year: edge.node.fields.year,
     image: data.allFile.edges.find(fileEdge => fileEdge.node.base === edge.node.fields.image)
   }))
-  const firstVideo = videos[0]
-  const lastVideo = [...videos].pop()
 
+  // We don't really want to use the setup described in the various gatsby tutorials on
+  // authentication. Those focus on client-only pages. But we do want our video pages to
+  // be statically available so that the proper meta tags can show the video thumbnail
+  // and such.
+  // We should build a CheckAuth component or something that renders children when
+  // authenticated and renders a login message if not. Just regular React stuff.
+  // This should also force <video> elements to not be rendered until _after_ auth
+  // stuff is pushed into videojs.
   return (
     <Layout>
       <SEO title='Home' />
-      <h1 className='site-title'>Family Videos: {firstVideo.year} - {lastVideo.year}</h1>
-
       <VideoList videos={videos} />
     </Layout>
   )
@@ -52,8 +56,8 @@ export const query = graphql`
         node {
           base
           childImageSharp {
-            fluid(maxWidth: 768) {
-              ...GatsbyImageSharpFluid
+            fixed(width: 300, height: 300) {
+              ...GatsbyImageSharpFixed
             }
           }
         }

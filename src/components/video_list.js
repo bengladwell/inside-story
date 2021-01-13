@@ -10,10 +10,10 @@ const VideoList = ({ videos }) => (
   <ul className='video-list'>
     {videos.map(({ id, slug, label, image }) => (
       <li className="video" key={id}>
-        <Img fluid={image.node.childImageSharp.fluid} />
-        <div className="video__name">
-          <Link to={`/${slug}`}>{label}</Link>
-        </div>
+        <Link to={`/${slug}`}>
+          <Img fixed={image.node.childImageSharp.fixed} />
+          <div className="video__name">{label}</div>
+        </Link>
       </li>
     ))}
   </ul>

@@ -1,6 +1,6 @@
 module.exports = {
   siteMetadata: {
-    title: 'Family Videos',
+    title: 'Gladwell Family Videos',
     description: 'Birthday videos for Hudson and Mesfin',
     author: '@bengladwell'
   },

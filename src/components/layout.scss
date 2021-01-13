@@ -14,7 +14,7 @@ body {
   padding: 1em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: $darkest-of-eggplants;
+  background-color: $off-white;
 }
 article,
 aside,
@@ -203,7 +203,7 @@ textarea {
   box-sizing: inherit;
 }
 body {
-  color: $white;
+  color: $metal;
   font-weight: normal;
   word-wrap: break-word;
   font-kerning: normal;
@@ -624,6 +624,17 @@ pre tt:after {
 //   }
 // }
 
+.site-layout {
+  display: flex;
+  flex-direction: column;
+
+  @media only screen and (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    height: 75vh;
+  }
+}
+
 .site-title {
-  color: $white;
+  color: $metal;
 }

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useStaticQuery, graphql } from 'gatsby'
 import S3 from 'aws-sdk/clients/s3'
 import videojs from 'video.js'
 
@@ -10,16 +9,6 @@ import Header from './header'
 import './layout.scss'
 
 const Layout = ({ children }) => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
-      site {
-        siteMetadata {
-          title
-        }
-      }
-    }
-  `)
-
   const [user, setUser] = useState(null)
 
   useEffect(() => {
@@ -54,17 +43,12 @@ const Layout = ({ children }) => {
   }, [])
 
   return (
-    <userContext.Provider value={user}>
-      <Header siteTitle={data.site.siteMetadata.title} />
-      <div
-        style={{
-          margin: '0 auto',
-          maxWidth: 960
-        }}
-      >
+    <div className="site-layout">
+      <userContext.Provider value={user}>
+        <Header />
         <main>{children}</main>
-      </div>
-    </userContext.Provider>
+      </userContext.Provider>
+    </div>
   )
 }
 
