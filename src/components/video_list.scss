@@ -6,6 +6,7 @@ $thumb-width-1: 200px;
 
 .video-list {
   margin: 0;
+  padding: 10% 0;
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -28,7 +29,7 @@ $thumb-width-1: 200px;
       top: 40%;
       text-align: center;
       color: $white;
-      font-size: 2.6rem;
+      font-size: 3rem;
       text-shadow: 1px 1px 2px $metal;
       max-width: $thumb-width-1;
     }

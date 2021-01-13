@@ -38,16 +38,18 @@ const Header = () => {
   return (
     <header className='site-header'>
       <div>
-        <Link
-          className='logo'
-          title={data.site.siteMetadata.title}
-          to='/'
-          style={{
-            textDecoration: 'none'
-          }}
-        >
-          {data.site.siteMetadata.title}
-        </Link>
+        <p>
+          <Link
+            className='logo'
+            title={data.site.siteMetadata.title}
+            to='/'
+            style={{
+              textDecoration: 'none'
+            }}
+          >
+            {data.site.siteMetadata.title}
+          </Link>
+        </p>
         <p>{firstVideo.year} - {lastVideo.year}</p>
         <userContext.Consumer>
           { user => user ? <User user={user} /> : <button className="site-header__login" onClick={Auth.login}>Login</button> }

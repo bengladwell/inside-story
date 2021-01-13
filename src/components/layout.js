@@ -48,11 +48,26 @@ const Layout = ({ children }) => {
       })
   }, [])
 
+  const loginMessage = (
+    <div className="login-message">
+      <p>This site is for my family and friends.</p>
+      <p>Please reach out if you would like access.</p>
+    </div>
+  )
+
   return (
     <div className="site-layout">
       <userContext.Provider value={user}>
         <Header />
-        { isLoading ? null : <main>{children}</main> }
+        {
+          isLoading
+            ? null
+            : (
+              user
+                ? <main>{children}</main>
+                : loginMessage
+            )
+        }
       </userContext.Provider>
     </div>
   )
