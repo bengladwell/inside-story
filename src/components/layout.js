@@ -10,13 +10,16 @@ import './layout.scss'
 
 const Layout = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     const auth = new Auth()
+    setIsLoading(true)
     Promise.all([
       auth.authorizeUser(),
       auth.getUser()
     ]).then(([authResp, user]) => {
+      setIsLoading(false)
       if (user) setUser(user)
       videojs.Vhs.xhr.beforeRequest = (options) => {
         const uriMatch = options.uri.match(/:\/\/([^.]+).+?\/(.+)/)
@@ -40,13 +43,16 @@ const Layout = ({ children }) => {
         return options
       }
     })
+      .finally(() => {
+        setIsLoading(false)
+      })
   }, [])
 
   return (
     <div className="site-layout">
       <userContext.Provider value={user}>
         <Header />
-        <main>{children}</main>
+        { isLoading ? null : <main>{children}</main> }
       </userContext.Provider>
     </div>
   )
