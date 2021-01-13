@@ -2,7 +2,7 @@
 
 // Fatter letters (typeface); possibly force name and "year n" to appear separate lines and style them differently
 
-$thumb-width-1: 300px;
+$thumb-width-1: 200px;
 
 .video-list {
   margin: 0;
@@ -12,10 +12,11 @@ $thumb-width-1: 300px;
   align-items: center;
   @media only screen and (min-width: 768px) {
     flex-direction: row;
+    flex-wrap: wrap;
   }
   .video {
     position: relative;
-    padding: 1em;
+    padding: 0.5em;
     img {
       filter: grayscale(40%);
     }
@@ -24,10 +25,10 @@ $thumb-width-1: 300px;
     }
     &__name {
       position: absolute;
-      top: 20%;
+      top: 40%;
       text-align: center;
       color: $white;
-      font-size: 4rem;
+      font-size: 2.6rem;
       text-shadow: 1px 1px 2px $metal;
       max-width: $thumb-width-1;
     }
