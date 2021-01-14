@@ -1,7 +1,6 @@
 import CognitoIdentityServiceProvider from 'aws-sdk/clients/cognitoidentityserviceprovider'
 import CognitoIdentity from 'aws-sdk/clients/cognitoidentity'
 import User from '../models/user'
-import jwtDecode from 'jwt-decode'
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
 const cognitoIdentity = new CognitoIdentity({ region: 'us-east-1' })
@@ -12,6 +11,8 @@ class Auth {
   static receive (hashString) {
     if (!hashString.match(/error=/)) {
       window.localStorage.setItem('cognito-user', hashString.substr(1))
+      window.history.replaceState({}, document.title, window.location.href.replace(hashString, ''))
+    } else if (hashString.match(/Unknown.user/)) {
       window.history.replaceState({}, document.title, window.location.href.replace(hashString, ''))
     }
   }

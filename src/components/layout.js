@@ -6,6 +6,7 @@ import videojs from 'video.js'
 import { userContext } from '../context'
 import Auth from '../services/auth'
 import Header from './header'
+import UnauthMessage from './unauth_message'
 import './layout.scss'
 
 const Layout = ({ children }) => {
@@ -48,13 +49,6 @@ const Layout = ({ children }) => {
       })
   }, [])
 
-  const loginMessage = (
-    <div className="login-message">
-      <p>This site is for my family and friends.</p>
-      <p>Please reach out if you would like access.</p>
-    </div>
-  )
-
   return (
     <div className="site-layout">
       <userContext.Provider value={user}>
@@ -65,7 +59,7 @@ const Layout = ({ children }) => {
             : (
               user
                 ? <main>{children}</main>
-                : loginMessage
+                : <UnauthMessage />
             )
         }
       </userContext.Provider>

@@ -1,9 +1,9 @@
 import { Link, useStaticQuery, graphql } from 'gatsby'
 import React from 'react'
 import './header.scss'
-import Auth from '../services/auth'
 import { userContext } from '../context'
 import User from './user'
+import LoginWithFacebookButton from './login_with_facebook_button'
 
 const Header = () => {
   const data = useStaticQuery(graphql`
@@ -52,7 +52,7 @@ const Header = () => {
         </p>
         <p>{firstVideo.year} - {lastVideo.year}</p>
         <userContext.Consumer>
-          { user => user ? <User user={user} /> : <button className="site-header__login" onClick={Auth.login}>Login</button> }
+          { user => user ? <User user={user} /> : <LoginWithFacebookButton /> }
         </userContext.Consumer>
       </div>
     </header>

@@ -1,14 +1,14 @@
-@import url('https://fonts.googleapis.com/css?family=Domine|Roboto&display=swap');
+@import url('https://fonts.googleapis.com/css?family=Lora|Lato&display=swap');
 @import '~modularscale-sass/stylesheets/modularscale';
 @import '../styles/variables';
 html {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Lato', sans-serif;
   -ms-text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
 }
-// h1, h2, h3, h4, h5, h6 {
-//   font-family: 'Domine', serif;
-// }
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Lora', serif;
+}
 body {
   margin: 0;
   padding: 1em;
@@ -618,11 +618,6 @@ pre tt:before,
 pre tt:after {
   content: "";
 }
-// @media only screen and (max-width: 480px) {
-//   html {
-//     font-size: 100%;
-//   }
-// }
 
 .site-layout {
   display: flex;
@@ -630,7 +625,7 @@ pre tt:after {
 
   @media only screen and (min-width: 768px) {
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
   }
 }
 

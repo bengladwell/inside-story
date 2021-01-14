@@ -1,0 +1,17 @@
+@import '../styles/variables';
+
+.unauth-message {
+  color: $black;
+  font-size: 1.6rem;
+  padding: 2em;
+
+  @media only screen and (min-width: 768px) {
+    flex-grow: 2;
+    padding: 3em;
+    font-size: 2rem;
+  }
+
+  &__small {
+    font-size: 0.5em;
+  }
+}

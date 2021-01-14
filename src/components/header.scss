@@ -2,14 +2,16 @@
 
 .site-header {
 
+  align-self: center;
+
   @media only screen and (min-width: 768px) {
-    width: 400px;
     padding: 0 1rem;
+    flex-grow: 1;
   }
 
   .logo {
     color: $metal;
-    font-family: 'Domine', serif;
+    font-family: 'Lora', serif;
     font-size: 1.2rem;
     font-weight: 700;
   }

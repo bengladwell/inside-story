@@ -1,0 +1,17 @@
+@import '../styles/variables';
+
+.login-with-facebook-button {
+  background: none;
+  display: flex;
+  align-items: center;
+  color: $facebook-blue;
+  border: 1px solid $facebook-blue;
+  border-radius: 5px;
+  padding: 0.25em 1em 0.25em 0.25em;
+  font-size: 1rem;
+  cursor: pointer;
+
+  & > div {
+    margin: 0 0.75em 0 0;
+  }
+}
