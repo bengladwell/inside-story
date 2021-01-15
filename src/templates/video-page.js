@@ -1,8 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { graphql } from 'gatsby'
+import Helmet from 'react-helmet'
 import Layout from '../components/layout'
 import VideoPlayer from '../components/video_player'
+import WithAuth from '../components/with_auth'
 
 import 'video.js/dist/video-js.css'
 
@@ -14,10 +16,17 @@ const VideoPage = ({
         label
       }
     },
-    file: {
+    poster: {
       childImageSharp: {
         fluid: {
           src: poster
+        }
+      }
+    },
+    thumbnail: {
+      childImageSharp: {
+        fixed: {
+          src: thumbnail
         }
       }
     }
@@ -25,22 +34,28 @@ const VideoPage = ({
 }) => {
   return (
     <Layout>
-      <h1>{label}</h1>
-      <VideoPlayer
-        controls={true}
-        height={432}
-        width={768}
-        poster={poster}
-      >
-        <source
-          src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/hls/${baseName}.m3u8`}
-          type="application/x-mpegURL"
-        />
-        <source
-          src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/dash/${baseName}.mpd`}
-          type="application/dash+xml"
-        />
-      </VideoPlayer>
+      <Helmet titleTemplate={`%s -- ${label}`}>
+        <meta name="og:image" content={thumbnail} />
+        <meta name="og:title" content={label} />
+      </Helmet>
+      <WithAuth>
+        <h1>{label}</h1>
+        <VideoPlayer
+          controls={true}
+          height={432}
+          width={768}
+          poster={poster}
+        >
+          <source
+            src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/hls/${baseName}.m3u8`}
+            type="application/x-mpegURL"
+          />
+          <source
+            src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/dash/${baseName}.mpd`}
+            type="application/dash+xml"
+          />
+        </VideoPlayer>
+      </WithAuth>
     </Layout>
   )
 }
@@ -53,9 +68,10 @@ export const query = graphql`
         dir
         label
         slug
+        image
       }
     }
-    file(base: {eq: $image}) {
+    poster: file(base: {eq: $image}) {
       childImageSharp {
         fluid(maxWidth: 800) {
           presentationHeight
@@ -63,6 +79,13 @@ export const query = graphql`
           sizes
           srcSet
           src
+        }
+      }
+    }
+    thumbnail: file(base: {eq: $image}) {
+      childImageSharp {
+        fixed(width: 400) {
+        ...GatsbyImageSharpFixed
         }
       }
     }
@@ -81,9 +104,16 @@ VideoPage.propTypes = {
         slug: PropTypes.string.isRequired
       })
     }),
-    file: PropTypes.shape({
+    poster: PropTypes.shape({
       childImageSharp: PropTypes.shape({
         fluid: PropTypes.shape({
+          src: PropTypes.string.isRequired
+        })
+      })
+    }),
+    thumbnail: PropTypes.shape({
+      childImageSharp: PropTypes.shape({
+        fixed: PropTypes.shape({
           src: PropTypes.string.isRequired
         })
       })

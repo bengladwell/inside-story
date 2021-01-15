@@ -2,16 +2,28 @@ import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import S3 from 'aws-sdk/clients/s3'
 import videojs from 'video.js'
+import { useStaticQuery, graphql } from 'gatsby'
+import Helmet from 'react-helmet'
 
 import { userContext } from '../context'
 import Auth from '../services/auth'
 import Header from './header'
-import UnauthMessage from './unauth_message'
 import './layout.scss'
 
 const Layout = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { site: { siteMetadata: { title } } } = useStaticQuery(
+    graphql`
+      query {
+        site {
+          siteMetadata {
+            title
+          }
+        }
+      }
+    `
+  )
 
   useEffect(() => {
     const auth = new Auth()
@@ -51,17 +63,12 @@ const Layout = ({ children }) => {
 
   return (
     <div className="site-layout">
+      <Helmet>
+        <title>{title}</title>
+      </Helmet>
       <userContext.Provider value={user}>
         <Header />
-        {
-          isLoading
-            ? null
-            : (
-              user
-                ? <main>{children}</main>
-                : <UnauthMessage />
-            )
-        }
+        { isLoading ? null : <main>{children}</main> }
       </userContext.Provider>
     </div>
   )

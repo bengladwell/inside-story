@@ -4,8 +4,8 @@ import PropTypes from 'prop-types'
 
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
-import SEO from '../components/seo'
 import Auth from '../services/auth'
+import WithAuth from '../components/with_auth'
 
 if (window && window.location.hash) {
   Auth.receive(window.location.hash)
@@ -20,18 +20,11 @@ const IndexPage = ({ data }) => {
     image: data.allFile.edges.find(fileEdge => fileEdge.node.base === edge.node.fields.image)
   }))
 
-  // We don't really want to use the setup described in the various gatsby tutorials on
-  // authentication. Those focus on client-only pages. But we do want our video pages to
-  // be statically available so that the proper meta tags can show the video thumbnail
-  // and such.
-  // We should build a CheckAuth component or something that renders children when
-  // authenticated and renders a login message if not. Just regular React stuff.
-  // This should also force <video> elements to not be rendered until _after_ auth
-  // stuff is pushed into videojs.
   return (
     <Layout>
-      <SEO title='Home' />
-      <VideoList videos={videos} />
+      <WithAuth>
+        <VideoList videos={videos} />
+      </WithAuth>
     </Layout>
   )
 }
