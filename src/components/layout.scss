@@ -632,3 +632,7 @@ pre tt:after {
 .site-title {
   color: $metal;
 }
+
+main {
+  flex-grow: 2;
+}
