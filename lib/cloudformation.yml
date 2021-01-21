@@ -1,0 +1,118 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# Needed
+# * Parameters
+#   * video bucket
+#   * Route53 zone
+#   * Facebook integration data
+# * S3 bucket for gatsby assets
+# * Cloudfront distribution for gatsby assets
+# * Route53 record
+# * SSL cert
+# * Cognito User Pool
+# * Cognito Identity Pool
+# * DynamoDB table
+# * Lambda function
+# * May need to enable CORS on video bucket for new domain
+
+Parameters:
+  AssetBucketName:
+    Type: String
+    Description: Optional name of the bucket that will host compiled site assets
+    Default: ""
+  HostName:
+    Type: String
+    Description: Optional hostname for site; requires HostedZone
+    Default: ""
+  HostedZoneId:
+    Type: String
+    Description: Route53 Hosted Zone Id; required when using Hostname
+    Default: ""
+
+Conditions:
+  NamedBucket: !Not
+    - !Equals
+      - !Ref AssetBucketName
+      - ""
+  NamedHost: !And
+    - !Not
+      - !Equals
+        - !Ref HostName
+        - ""
+    - !Not
+      - !Equals
+        - !Ref HostedZoneId
+        - ""
+
+Resources:
+  OriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: inside-story-cloudfront
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn:
+      - OriginAccessIdentity
+    Properties:
+      BucketName: !If
+        - NamedBucket
+        - !Ref AssetBucketName
+        - !Ref AWS::NoValue
+  SampleBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    DependsOn:
+      - S3Bucket
+      - OriginAccessIdentity
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - 's3:GetObject'
+            Effect: Allow
+            Resource: !Join
+              - ''
+              - - 'arn:aws:s3:::'
+                - !Ref S3Bucket
+                - /*
+            Principal:
+              AWS: !Join
+                - ' '
+                - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
+                  - !Ref OriginAccessIdentity
+  Distribution:
+    DependsOn:
+      - S3Bucket
+      - OriginAccessIdentity
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt S3Bucket.DomainName
+            Id: site-assets
+            S3OriginConfig:
+              OriginAccessIdentity: !Join [ "/", ["origin-access-identity", "cloudfront", !Ref OriginAccessIdentity]]
+        Enabled: true
+        HttpVersion: http2
+        Aliases: !If
+          - NamedHost
+          - [TODO-construct-or-get-the-cname-url]
+          - !Ref AWS::NoValue
+        DefaultRootObject: index.html
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          TargetOriginId: site-assets
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
+          OriginRequestPolicyId: acba4595-bd28-49b8-b9fe-13317c0390fa # Managed-UserAgentRefererHeaders
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: !If [NamedHost, false, true]
+          SSLSupportMethod: !If [NamedHost, "sni-only", !Ref AWS::NoValue]
+          MinimumProtocolVersion: !If [NamedHost, "TLSv1", !Ref AWS::NoValue]
+          AcmCertificateArn: !If [NamedHost, TODO, !Ref AWS::NoValue]
+        IPV6Enabled: true
