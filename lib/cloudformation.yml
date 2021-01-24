@@ -5,10 +5,6 @@ AWSTemplateFormatVersion: 2010-09-09
 #   * video bucket
 #   * Route53 zone
 #   * Facebook integration data
-# * S3 bucket for gatsby assets
-# * Cloudfront distribution for gatsby assets
-# * Route53 record
-# * SSL cert
 # * Cognito User Pool
 # * Cognito Identity Pool
 # * DynamoDB table
@@ -20,13 +16,13 @@ Parameters:
     Type: String
     Description: Optional name of the bucket that will host compiled site assets
     Default: ""
-  HostName:
+  FullyQualifiedHostName:
     Type: String
-    Description: Optional hostname for site; requires HostedZone
+    Description: Optional fully qualified hostname for site; requires HostedZoneId
     Default: ""
   HostedZoneId:
     Type: String
-    Description: Route53 Hosted Zone Id; required when using Hostname
+    Description: Route53 Hosted Zone Id; required when using FullyQualifiedHostName
     Default: ""
 
 Conditions:
@@ -37,7 +33,7 @@ Conditions:
   NamedHost: !And
     - !Not
       - !Equals
-        - !Ref HostName
+        - !Ref FullyQualifiedHostName
         - ""
     - !Not
       - !Equals
@@ -50,6 +46,7 @@ Resources:
     Properties:
       CloudFrontOriginAccessIdentityConfig:
         Comment: inside-story-cloudfront
+
   S3Bucket:
     Type: AWS::S3::Bucket
     DependsOn:
@@ -59,6 +56,7 @@ Resources:
         - NamedBucket
         - !Ref AssetBucketName
         - !Ref AWS::NoValue
+
   SampleBucketPolicy:
     Type: AWS::S3::BucketPolicy
     DependsOn:
@@ -81,10 +79,23 @@ Resources:
                 - ' '
                 - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
                   - !Ref OriginAccessIdentity
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Condition: NamedHost
+    Properties:
+      CertificateTransparencyLoggingPreference: ENABLED
+      DomainName: !Ref FullyQualifiedHostName
+      DomainValidationOptions:
+        - DomainName: !Ref FullyQualifiedHostName
+          HostedZoneId: !Ref HostedZoneId
+      ValidationMethod: DNS
+
   Distribution:
     DependsOn:
       - S3Bucket
       - OriginAccessIdentity
+      - Certificate
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
@@ -97,7 +108,7 @@ Resources:
         HttpVersion: http2
         Aliases: !If
           - NamedHost
-          - [TODO-construct-or-get-the-cname-url]
+          - [!Ref FullyQualifiedHostName]
           - !Ref AWS::NoValue
         DefaultRootObject: index.html
         DefaultCacheBehavior:
@@ -111,8 +122,30 @@ Resources:
           OriginRequestPolicyId: acba4595-bd28-49b8-b9fe-13317c0390fa # Managed-UserAgentRefererHeaders
         PriceClass: PriceClass_100
         ViewerCertificate:
-          CloudFrontDefaultCertificate: !If [NamedHost, false, true]
-          SSLSupportMethod: !If [NamedHost, "sni-only", !Ref AWS::NoValue]
+          CloudFrontDefaultCertificate: !If [NamedHost, !Ref AWS::NoValue, true]
+          SslSupportMethod: !If [NamedHost, "sni-only", !Ref AWS::NoValue]
           MinimumProtocolVersion: !If [NamedHost, "TLSv1", !Ref AWS::NoValue]
-          AcmCertificateArn: !If [NamedHost, TODO, !Ref AWS::NoValue]
+          AcmCertificateArn: !If [NamedHost, !Ref Certificate, !Ref AWS::NoValue]
         IPV6Enabled: true
+
+  DNSRecord:
+    DependsOn:
+      - Distribution
+    Type: AWS::Route53::RecordSet
+    Condition: NamedHost
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref FullyQualifiedHostName
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt Distribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+Outputs:
+  CloudfrontDomain:
+    Description: The domain where the site is hosted in Cloudfront
+    Value: !GetAtt Distribution.DomainName
+  AliasDomain:
+    Description: The alias domain for the site
+    Value: !Ref FullyQualifiedHostName
+    Condition: NamedHost
