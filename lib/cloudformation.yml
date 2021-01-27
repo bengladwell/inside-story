@@ -1,16 +1,5 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-# Needed
-# * Parameters
-#   * video bucket
-#   * Route53 zone
-#   * Facebook integration data
-# * Cognito User Pool
-# * Cognito Identity Pool
-# * DynamoDB table
-# * Lambda function
-# * May need to enable CORS on video bucket for new domain
-
 Parameters:
   AssetBucketName:
     Type: String
@@ -24,6 +13,12 @@ Parameters:
     Type: String
     Description: Route53 Hosted Zone Id; required when using FullyQualifiedHostName
     Default: ""
+  FacebookClientId:
+    Type: String
+    Description: Facebook client_id for authorizing Facebook app
+  FacebookClientSecret:
+    Type: String
+    Description: Facebook client_secret for authorizing Facebook app
 
 Conditions:
   NamedBucket: !Not
@@ -39,6 +34,41 @@ Conditions:
       - !Equals
         - !Ref HostedZoneId
         - ""
+Rules:
+  fullyQualifiedHostNameRequired:
+    RuleCondition: !Not
+      - !Equals
+        - !Ref HostedZoneId
+        - ""
+    Assertions:
+      - Assert: !Not
+        - !Equals
+          - !Ref FullyQualifiedHostName
+          - ""
+        AssertDescription: When HostedZoneId is used, FullyQualifiedHostName is required
+  hostedZoneIdRequired:
+    RuleCondition: !Not
+      - !Equals
+        - !Ref FullyQualifiedHostName
+        - ""
+    Assertions:
+      - Assert: !Not
+        - !Equals
+          - !Ref HostedZoneId
+          - ""
+        AssertDescription: When FullyQualifiedHostName is used, HostedZoneId is required
+  facebookParamsRequired:
+    Assertions:
+      - Assert: !Not
+        - !Equals
+          - !Ref FacebookClientId
+          - ""
+        AssertDescription: FacebookClientId is required
+      - Assert: !Not
+        - !Equals
+          - !Ref FacebookClientSecret
+          - ""
+        AssertDescription: FacebookClientSecret is required
 
 Resources:
   OriginAccessIdentity:
@@ -49,8 +79,6 @@ Resources:
 
   S3Bucket:
     Type: AWS::S3::Bucket
-    DependsOn:
-      - OriginAccessIdentity
     Properties:
       BucketName: !If
         - NamedBucket
@@ -59,9 +87,6 @@ Resources:
 
   SampleBucketPolicy:
     Type: AWS::S3::BucketPolicy
-    DependsOn:
-      - S3Bucket
-      - OriginAccessIdentity
     Properties:
       Bucket: !Ref S3Bucket
       PolicyDocument:
@@ -92,10 +117,6 @@ Resources:
       ValidationMethod: DNS
 
   Distribution:
-    DependsOn:
-      - S3Bucket
-      - OriginAccessIdentity
-      - Certificate
     Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
@@ -129,8 +150,6 @@ Resources:
         IPV6Enabled: true
 
   DNSRecord:
-    DependsOn:
-      - Distribution
     Type: AWS::Route53::RecordSet
     Condition: NamedHost
     Properties:
@@ -141,6 +160,184 @@ Resources:
         DNSName: !GetAtt Distribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2
 
+  UserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      LambdaConfig:
+        PreAuthentication: !GetAtt UserAuthorizerFunction.Arn
+      UsernameAttributes:
+        - email
+      UsernameConfiguration:
+        CaseSensitive: true
+
+  FacebookIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderType: Facebook
+      ProviderName: Facebook
+      ProviderDetails:
+        client_id: !Ref FacebookClientId
+        client_secret: !Ref FacebookClientSecret
+        authorize_scopes: public_profile, email
+        api_version: v6.0
+      AttributeMapping:
+        Username: id
+        Email: email
+        Name: name
+        Picture: picture
+
+  UserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      Domain: inside-story-test
+
+  UserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+      - FacebookIdentityProvider
+      - UserPoolDomain
+    Properties:
+      UserPoolId: !Ref UserPool
+      GenerateSecret: true
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+        - implicit
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - aws.cognito.signin.user.admin
+      CallbackURLs: !If
+        - NamedHost
+        - - http://localhost:8000/
+          - !Sub
+            - https://${Site}/
+            - { Site: !GetAtt Distribution.DomainName }
+          - !Sub
+            - https://${Site}/
+            - { Site: !Ref FullyQualifiedHostName }
+        - - http://localhost:8000/
+          - !Sub
+            - https://${Site}/
+            - { Site: !GetAtt Distribution.DomainName }
+      LogoutURLs: !If
+        - NamedHost
+        - - http://localhost:8000/
+          - !Sub
+            - https://${Site}/
+            - { Site: !GetAtt Distribution.DomainName }
+          - !Sub
+            - https://${Site}/
+            - { Site: !Ref FullyQualifiedHostName }
+        - - http://localhost:8000/
+          - !Sub
+            - https://${Site}/
+            - { Site: !GetAtt Distribution.DomainName }
+      ClientName: site-users
+      ExplicitAuthFlows:
+        - ALLOW_CUSTOM_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - Facebook
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 3
+        WriteCapacityUnits: 3
+
+  AuthorizeInsideStoryUserPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Provides access to DynamoDB users table
+      ManagedPolicyName: !Join
+        - '-'
+        - - !Ref 'AWS::Region'
+          - AccessInsideStoryUsersTable
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:GetItem
+            Resource:
+              - !GetAtt UsersTable.Arn
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource:
+              - '*'
+
+  AuthorizerFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: InsideStoryUserAccessForFunction
+      Description: Allows AuthorizeInsideStoryUser lambda function to connect to DynamoDB
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - !Ref AuthorizeInsideStoryUserPolicy
+
+  UserAuthorizerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: AuthorizeInsideStoryUsers
+      Description: Authorizes Inside Story users
+      Handler: index.handler
+      Role: !GetAtt AuthorizerFunctionRole.Arn
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk')
+          const dynamodb = new AWS.DynamoDB()
+
+          exports.handler = (event, context, callback) => {
+              const getItemParams = {
+                  Key: {
+                      email: {
+                          S: event.request.userAttributes.email
+                      }
+                  },
+                  TableName: 'users'
+              }
+
+              dynamodb.getItem(getItemParams, function (err, data) {
+                  if (err) {
+                      callback(err)
+                      return
+                  }
+
+                  console.log(data)
+
+                  if (!Object.keys(data).length) {
+                      callback(new Error("Unknown user"), event)
+                      return
+                  }
+
+                  callback(null, event);
+              })
+          };
+      Runtime: nodejs12.x
+
 Outputs:
   CloudfrontDomain:
     Description: The domain where the site is hosted in Cloudfront
@@ -149,3 +346,6 @@ Outputs:
     Description: The alias domain for the site
     Value: !Ref FullyQualifiedHostName
     Condition: NamedHost
+  UsersTable:
+    Description: DynamoDB table storing site users
+    Value: !Ref UsersTable

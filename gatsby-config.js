@@ -8,7 +8,7 @@ module.exports = {
     {
       resolve: 'gatsby-plugin-s3',
       options: {
-        bucketName: 'inside-story'
+        bucketName: process.env.S3_BUCKET_NAME || 'inside-story'
       }
     },
     'gatsby-plugin-sass',
