@@ -4,8 +4,8 @@ import User from '../models/user'
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
 const cognitoIdentity = new CognitoIdentity({ region: 'us-east-1' })
-const userPool = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_ojhYSduq8'
-const identityPoolId = 'us-east-1:7750fa7b-1fb4-41b3-8a6b-993cc405f7ef'
+const userPool = `cognito-idp.us-east-1.amazonaws.com/${process.env.USER_POOL_ID}`
+const identityPoolId = process.env.IDENTITY_POOL_ID
 
 class Auth {
   static receive (hashString) {
@@ -18,7 +18,7 @@ class Auth {
   }
 
   static login () {
-    window.location = `https://inside-story.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&identity_provider=Facebook`
+    window.location = `https://${process.env.USER_POOL_DOMAIN}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&identity_provider=Facebook`
   }
 
   constructor () {
