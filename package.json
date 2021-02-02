@@ -53,7 +53,7 @@
     "clean": "gatsby clean",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1",
     "stack:validate-template": "aws cloudformation validate-template --template-body file://lib/cloudformation.yml",
-    "stack:create": "aws cloudformation create-stack --stack-name inside-story-test --template-body file://lib/cloudformation.yml",
+    "stack:create": "scripts/create_stack.js",
     "stack:status": "aws cloudformation describe-stacks --stack-name inside-story-test | jq '.Stacks[0].StackStatus'",
     "stack:delete": "aws cloudformation delete-stack --stack-name inside-story-test"
   },

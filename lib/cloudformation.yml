@@ -19,7 +19,7 @@ Parameters:
   FacebookClientSecret:
     Type: String
     Description: Facebook client_secret for authorizing Facebook app
-  VideoAssetBucketArnPath:
+  VideoAssetArn:
     Type: String
     Description: Location of stored video assets as ARN + path; e.g. arn:aws:s3:::somebucket/assets/*
 
@@ -76,9 +76,9 @@ Rules:
     Assertions:
       - Assert: !Not
         - !Equals
-          - !Ref VideoAssetBucketArnPath
+          - !Ref VideoAssetArn
           - ""
-        AssertDescription: VideoAssetBucketArnPath is required
+        AssertDescription: VideoAssetArn is required
 
 Resources:
   OriginAccessIdentity:
@@ -311,7 +311,7 @@ Resources:
             Action:
               - s3:GetObject
             Resource:
-              - !Ref VideoAssetBucketArnPath
+              - !Ref VideoAssetArn
 
   UsersTable:
     Type: AWS::DynamoDB::Table
