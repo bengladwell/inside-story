@@ -246,7 +246,7 @@ Resources:
             - { Site: !GetAtt Distribution.DomainName }
       ClientName: site-users
       ExplicitAuthFlows:
-        - ALLOW_CUSTOM_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
@@ -322,10 +322,7 @@ Resources:
       KeySchema:
         - AttributeName: email
           KeyType: HASH
-      BillingMode: PROVISIONED
-      ProvisionedThroughput:
-        ReadCapacityUnits: 3
-        WriteCapacityUnits: 3
+      BillingMode: PAY_PER_REQUEST
 
   AuthorizeInsideStoryUserPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -365,6 +362,14 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - !Ref AuthorizeInsideStoryUserPolicy
+
+  AuthorizerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt UserAuthorizerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
 
   UserAuthorizerFunction:
     Type: AWS::Lambda::Function
