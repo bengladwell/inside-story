@@ -5,8 +5,9 @@ const { promisify } = require('util')
 const exec = promisify(require('child_process').exec)
 const readFile = promisify(require('fs').readFile)
 
-// TODO: figure out what to do with .env files
-require('dotenv').config()
+require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV}`
+})
 
 const cloudFormation = new CloudFormation({ region: process.env.AWS_REGION })
 
