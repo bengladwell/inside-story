@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# if [ -f .env ]; then
+#   set -o allexport
+#   source .env
+#   set +o allexport
+# fi
+
+echo "Retrieving stack description..."
+STACK_OUTPUT=`aws cloudformation describe-stacks --stack-name $(git branch --show-current) | jq ".Stacks[0].Outputs"`
+echo "Done"
+
+for ENV in development production; do
+  # gatsby uses a particular scheme for organizing env files;
+  # we treat all env files the same in accordance with 12-factor app guidelines
+  cp -f -v .env .env.$ENV
+  SITE_BUCKET=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "BucketName").OutputValue'`
+  echo "SITE_BUCKET=$SITE_BUCKET" >> .env.$ENV
+  IDENTITY_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "IdentityPoolId").OutputValue'`
+  echo "IDENTITY_POOL_ID=$IDENTITY_POOL_ID" >> .env.$ENV
+  USER_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolId").OutputValue'`
+  echo "USER_POOL_ID=$USER_POOL_ID" >> .env.$ENV
+  USER_POOL_DOMAIN=`git branch --show-current`
+  echo "USER_POOL_DOMAIN=$USER_POOL_DOMAIN" >> .env.$ENV
+  USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
+  echo "USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID" >> .env.$ENV
+  CLOUDFRONT_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "CloudfrontDomain").OutputValue'`
+  echo "CLOUDFRONT_DOMAIN=$CLOUDFRONT_DOMAIN" >> .env.$ENV
+done

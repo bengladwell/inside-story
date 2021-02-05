@@ -44,9 +44,9 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "gatsby build",
-    "develop": "gatsby develop",
-    "deploy": "gatsby-plugin-s3 deploy",
+    "build": "scripts/set_env && gatsby build",
+    "develop": "scripts/set_env && gatsby develop",
+    "deploy": "scripts/set_env && gatsby-plugin-s3 deploy",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
     "start": "npm run develop",
     "serve": "gatsby serve",

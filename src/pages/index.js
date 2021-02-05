@@ -7,7 +7,7 @@ import VideoList from '../components/video_list'
 import Auth from '../services/auth'
 import WithAuth from '../components/with_auth'
 
-if (window && window.location.hash) {
+if (typeof window !== 'undefined' && window.location.hash) {
   Auth.receive(window.location.hash)
 }
 

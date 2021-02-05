@@ -1,3 +1,6 @@
+require('dotenv').config({
+  path: `.env.${process.env.NODE_ENV}`
+})
 module.exports = {
   siteMetadata: {
     title: 'Gladwell Family Videos',
@@ -8,7 +11,7 @@ module.exports = {
     {
       resolve: 'gatsby-plugin-s3',
       options: {
-        bucketName: process.env.S3_BUCKET_NAME || 'inside-story'
+        bucketName: process.env.SITE_BUCKET || 'inside-story'
       }
     },
     'gatsby-plugin-sass',

@@ -13,10 +13,10 @@ Parameters:
     Type: String
     Description: Route53 Hosted Zone Id; required when using FullyQualifiedHostName
     Default: ""
-  FacebookClientId:
+  FacebookAppId:
     Type: String
     Description: Facebook client_id for authorizing Facebook app
-  FacebookClientSecret:
+  FacebookAppSecret:
     Type: String
     Description: Facebook client_secret for authorizing Facebook app
   VideoAssetArn:
@@ -64,14 +64,14 @@ Rules:
     Assertions:
       - Assert: !Not
         - !Equals
-          - !Ref FacebookClientId
+          - !Ref FacebookAppId
           - ""
-        AssertDescription: FacebookClientId is required
+        AssertDescription: FacebookAppId is required
       - Assert: !Not
         - !Equals
-          - !Ref FacebookClientSecret
+          - !Ref FacebookAppSecret
           - ""
-        AssertDescription: FacebookClientSecret is required
+        AssertDescription: FacebookAppSecret is required
   videoAssetBucketArnPathRequired:
     Assertions:
       - Assert: !Not
@@ -187,8 +187,8 @@ Resources:
       ProviderType: Facebook
       ProviderName: Facebook
       ProviderDetails:
-        client_id: !Ref FacebookClientId
-        client_secret: !Ref FacebookClientSecret
+        client_id: !Ref FacebookAppId
+        client_secret: !Ref FacebookAppSecret
         authorize_scopes: public_profile, email
         api_version: v6.0
       AttributeMapping:

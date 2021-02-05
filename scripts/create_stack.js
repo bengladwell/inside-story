@@ -26,11 +26,11 @@ async function createStack () {
       TemplateBody: cfTemplate,
       Capabilities: ['CAPABILITY_NAMED_IAM'],
       Parameters: [{
-        ParameterKey: 'FacebookClientId',
-        ParameterValue: process.env.FACEBOOK_CLIENT_ID
+        ParameterKey: 'FacebookAppId',
+        ParameterValue: process.env.FACEBOOK_APP_ID
       }, {
-        ParameterKey: 'FacebookClientSecret',
-        ParameterValue: process.env.FACEBOOK_CLIENT_SECRET
+        ParameterKey: 'FacebookAppSecret',
+        ParameterValue: process.env.FACEBOOK_APP_SECRET
       }, {
         ParameterKey: 'VideoAssetArn',
         ParameterValue: process.env.VIDEO_ASSET_ARN

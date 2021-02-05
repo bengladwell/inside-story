@@ -6,6 +6,9 @@ const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ regi
 const cognitoIdentity = new CognitoIdentity({ region: 'us-east-1' })
 const userPool = `cognito-idp.us-east-1.amazonaws.com/${process.env.USER_POOL_ID}`
 const identityPoolId = process.env.IDENTITY_POOL_ID
+const redirectUri = process.env.NODE_ENV === 'development'
+  ? encodeURIComponent('http://localhost:8000/')
+  : encodeURIComponent(`https://${process.env.CLOUDFRONT_DOMAIN}/`)
 
 class Auth {
   static receive (hashString) {
@@ -18,7 +21,7 @@ class Auth {
   }
 
   static login () {
-    window.location = `https://${process.env.USER_POOL_DOMAIN}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=http%3A%2F%2Flocalhost%3A8000%2F&identity_provider=Facebook`
+    window.location = `https://${process.env.USER_POOL_DOMAIN}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Facebook`
   }
 
   constructor () {
