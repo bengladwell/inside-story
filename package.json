@@ -46,7 +46,7 @@
   "scripts": {
     "build": "scripts/set_env && gatsby build",
     "develop": "scripts/set_env && gatsby develop",
-    "deploy": "scripts/set_env && gatsby-plugin-s3 deploy",
+    "deploy": "scripts/deploy",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
     "start": "npm run develop",
     "serve": "gatsby serve",
@@ -54,8 +54,8 @@
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1",
     "stack:validate-template": "aws cloudformation validate-template --template-body file://lib/cloudformation.yml",
     "stack:create": "scripts/create_stack.js",
-    "stack:status": "aws cloudformation describe-stacks --stack-name inside-story-test | jq '.Stacks[0].StackStatus'",
-    "stack:delete": "aws cloudformation delete-stack --stack-name inside-story-test"
+    "stack:status": "aws cloudformation describe-stacks --stack-name $(git branch --show-current) | jq '.Stacks[0].StackStatus'",
+    "stack:delete": "aws cloudformation delete-stack --stack-name $(git branch --show-current)"
   },
   "repository": {
     "type": "git",
