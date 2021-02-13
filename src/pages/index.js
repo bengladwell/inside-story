@@ -31,7 +31,7 @@ const IndexPage = ({ data }) => {
 
 export const query = graphql`
   query {
-    allVideosYaml(sort: {fields: year}) {
+    allVideosYaml {
       edges {
         node {
           id
