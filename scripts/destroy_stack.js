@@ -12,11 +12,13 @@ const s3 = new S3({ region: process.env.AWS_REGION })
 const cloudFormation = new CloudFormation({ region: process.env.AWS_REGION })
 const videoAssetBucket = process.env.VIDEO_ASSET_BUCKET
 
-async function branchName () {
+async function stackName () {
   const { stdout, stderr } = await exec('git branch --show-current')
   if (stderr) throw new Error(stderr)
 
-  return stdout.substring(0, stdout.length - 1)
+  const branchName = stdout.substring(0, stdout.length - 1)
+
+  return branchName === 'master' ? 'inside-story' : branchName
 }
 
 async function getCorsRules () {
@@ -82,12 +84,18 @@ async function destroyObjects (allObjects) {
 
 async function destroyStack () {
   return cloudFormation.deleteStack({
-    StackName: await branchName()
+    StackName: await stackName()
   }).promise()
 }
 
 (async () => {
   try {
+    const stack = await stackName()
+    if (stack === 'inside-story') {
+      console.log('Stack is inside-story; Aborting.')
+      return
+    }
+
     console.log('Removing CORS rule')
     await removeCORSRule()
 

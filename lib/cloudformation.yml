@@ -1,10 +1,6 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  AssetBucketName:
-    Type: String
-    Description: Optional name of the bucket that will host compiled site assets
-    Default: ""
   FullyQualifiedHostName:
     Type: String
     Description: Optional fully qualified hostname for site; requires HostedZoneId
@@ -24,10 +20,6 @@ Parameters:
     Description: Location of stored video assets as ARN + path; e.g. arn:aws:s3:::somebucket/assets/*
 
 Conditions:
-  NamedBucket: !Not
-    - !Equals
-      - !Ref AssetBucketName
-      - ""
   NamedHost: !And
     - !Not
       - !Equals
@@ -84,10 +76,7 @@ Resources:
   SiteBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !If
-        - NamedBucket
-        - !Ref AssetBucketName
-        - !Ref AWS::NoValue
+      BucketName: !Ref AWS::StackName
       WebsiteConfiguration:
         IndexDocument: index.html
 
@@ -148,6 +137,7 @@ Resources:
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
+      UserPoolName: !Ref AWS::StackName
       LambdaConfig:
         PreAuthentication: !GetAtt UserAuthorizerFunction.Arn
       UsernameAttributes:
@@ -278,7 +268,7 @@ Resources:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       Description: 'Allows assets to site video assets'
-      ManagedPolicyName: !Sub ["${Region}-${StackName}-AccessVideoAssets", { Region: !Ref AWS::Region, StackName: !Ref AWS::StackName }]
+      ManagedPolicyName: !Sub ["${StackName}-AccessVideoAssets", { StackName: !Ref AWS::StackName }]
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -291,6 +281,7 @@ Resources:
   UsersTable:
     Type: AWS::DynamoDB::Table
     Properties:
+      TableName: !Ref AWS::StackName
       AttributeDefinitions:
         - AttributeName: email
           AttributeType: S
@@ -303,7 +294,7 @@ Resources:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
       Description: Provides access to DynamoDB users table
-      ManagedPolicyName: !Sub ["${Region}-${StackName}-AccessUsersTable", { Region: !Ref AWS::Region, StackName: !Ref AWS::StackName }]
+      ManagedPolicyName: !Sub ["${StackName}-AccessUsersTable", { StackName: !Ref AWS::StackName }]
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -417,14 +408,10 @@ Outputs:
     Value: !Ref SiteBucket
   CloudfrontDomain:
     Description: The domain where the site is hosted in Cloudfront
-    Value: !GetAtt Distribution.DomainName
-  AliasDomain:
-    Description: The alias domain for the site
-    Value: !Ref FullyQualifiedHostName
-    Condition: NamedHost
-  UsersTable:
-    Description: DynamoDB table storing site users
-    Value: !Ref UsersTable
+    Value: !If
+      - NamedHost
+      - !Ref FullyQualifiedHostName
+      - !GetAtt Distribution.DomainName
   UserPoolClientId:
     Description: Cognito User Pool Client id
     Value: !Ref UserPoolClient

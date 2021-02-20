@@ -1,13 +1,15 @@
 #!/bin/bash
 
-# if [ -f .env ]; then
-#   set -o allexport
-#   source .env
-#   set +o allexport
-# fi
+BRANCH=$(git branch --show-current)
+
+if [ $BRANCH == "master" ]; then
+  STACK_NAME=inside-story
+else
+  STACK_NAME=$BRANCH
+fi
 
 echo "Retrieving stack description..."
-STACK_OUTPUT=`aws cloudformation describe-stacks --stack-name $(git branch --show-current) | jq ".Stacks[0].Outputs"`
+STACK_OUTPUT=`aws cloudformation describe-stacks --stack-name $STACK_NAME | jq ".Stacks[0].Outputs"`
 echo "Done"
 
 for ENV in development production; do
@@ -20,7 +22,7 @@ for ENV in development production; do
   echo "IDENTITY_POOL_ID=$IDENTITY_POOL_ID" >> .env.$ENV
   USER_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolId").OutputValue'`
   echo "USER_POOL_ID=$USER_POOL_ID" >> .env.$ENV
-  USER_POOL_DOMAIN=`git branch --show-current`
+  USER_POOL_DOMAIN=$STACK_NAME
   echo "USER_POOL_DOMAIN=$USER_POOL_DOMAIN" >> .env.$ENV
   USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
   echo "USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID" >> .env.$ENV
