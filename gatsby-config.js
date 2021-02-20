@@ -5,13 +5,22 @@ module.exports = {
   siteMetadata: {
     title: 'Gladwell Family Videos',
     description: 'Birthday videos for Hudson and Mesfin',
-    author: '@bengladwell'
+    author: '@bengladwell',
+    siteURL: `https://${process.env.CLOUDFRONT_DOMAIN}`
   },
   plugins: [
     {
       resolve: 'gatsby-plugin-s3',
       options: {
-        bucketName: process.env.SITE_BUCKET || 'inside-story'
+        bucketName: process.env.SITE_BUCKET || 'inside-story',
+        protocol: 'https',
+        hostname: process.env.CLOUDFRONT_DOMAIN
+      }
+    },
+    {
+      resolve: 'gatsby-plugin-canonical-urls',
+      options: {
+        siteUrl: `https://${process.env.CLOUDFRONT_DOMAIN}`
       }
     },
     'gatsby-plugin-sass',

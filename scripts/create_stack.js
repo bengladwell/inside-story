@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const CloudFormation = require('aws-sdk/clients/cloudformation')
+const Str = require('@supercharge/strings')
 const { promisify } = require('util')
 const exec = promisify(require('child_process').exec)
 const readFile = promisify(require('fs').readFile)

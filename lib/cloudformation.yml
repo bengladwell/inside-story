@@ -72,7 +72,7 @@ Rules:
           - !Ref FacebookAppSecret
           - ""
         AssertDescription: FacebookAppSecret is required
-  videoAssetBucketArnPathRequired:
+  videoAssetArnRequired:
     Assertions:
       - Assert: !Not
         - !Equals
@@ -81,39 +81,15 @@ Rules:
         AssertDescription: VideoAssetArn is required
 
 Resources:
-  OriginAccessIdentity:
-    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
-    Properties:
-      CloudFrontOriginAccessIdentityConfig:
-        Comment: !Sub ["${StackName}-cloudfront", { StackName: !Ref AWS::StackName }]
-
-  S3Bucket:
+  SiteBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !If
         - NamedBucket
         - !Ref AssetBucketName
         - !Ref AWS::NoValue
-
-  SampleBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref S3Bucket
-      PolicyDocument:
-        Statement:
-          - Action:
-              - 's3:GetObject'
-            Effect: Allow
-            Resource: !Join
-              - ''
-              - - 'arn:aws:s3:::'
-                - !Ref S3Bucket
-                - /*
-            Principal:
-              AWS: !Join
-                - ' '
-                - - 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity'
-                  - !Ref OriginAccessIdentity
+      WebsiteConfiguration:
+        IndexDocument: index.html
 
   Certificate:
     Type: AWS::CertificateManager::Certificate
@@ -131,17 +107,16 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
-          - DomainName: !GetAtt S3Bucket.DomainName
+          - DomainName: !Sub ["${BucketName}.s3-website-${Region}.amazonaws.com", { BucketName: !Ref SiteBucket, Region: !Ref AWS::Region }]
             Id: site-assets
-            S3OriginConfig:
-              OriginAccessIdentity: !Join [ "/", ["origin-access-identity", "cloudfront", !Ref OriginAccessIdentity]]
+            CustomOriginConfig:
+              OriginProtocolPolicy: http-only
         Enabled: true
         HttpVersion: http2
         Aliases: !If
           - NamedHost
           - [!Ref FullyQualifiedHostName]
           - !Ref AWS::NoValue
-        DefaultRootObject: index.html
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -335,6 +310,7 @@ Resources:
           - Effect: Allow
             Action:
               - dynamodb:GetItem
+              - dynamodb:PutItem
             Resource:
               - !GetAtt UsersTable.Arn
           - Effect: Allow
@@ -386,38 +362,59 @@ Resources:
           const AWS = require('aws-sdk')
           const dynamodb = new AWS.DynamoDB()
 
-          exports.handler = (event, context, callback) => {
-              const getItemParams = {
-                  Key: {
-                      email: {
-                          S: event.request.userAttributes.email
-                      }
-                  },
-                  TableName: process.env.USER_TABLE
+          exports.handler = async (event, context, callback) => {
+            const getItemParams = {
+              Key: {
+                email: {
+                  S: event.request.userAttributes.email
+                }
+              },
+              TableName: process.env.USER_TABLE
+            }
+
+            try {
+              const data = await dynamodb.getItem(getItemParams).promise()
+
+              if (!Object.keys(data).length) {
+                await dynamodb.putItem({
+                  TableName: process.env.USER_TABLE,
+                  Item: {
+                    email: {
+                      S: event.request.userAttributes.email
+                    },
+                    name: {
+                      S: event.request.userAttributes.name
+                    },
+                    is_approved: {
+                      BOOL: false
+                    },
+                    created_at: {
+                      S: (new Date()).toISOString()
+                    }
+                  }
+                }).promise()
+
+                callback(new Error("Unknown user"), event)
+                return
               }
 
-              dynamodb.getItem(getItemParams, function (err, data) {
-                  if (err) {
-                      callback(err)
-                      return
-                  }
+              if (!(data.Item.is_approved && data.Item.is_approved.BOOL)) {
+                callback(new Error("Unapproved user"), event)
+                return
+              }
 
-                  console.log(data)
-
-                  if (!Object.keys(data).length) {
-                      callback(new Error("Unknown user"), event)
-                      return
-                  }
-
-                  callback(null, event);
-              })
-          };
+              callback(null, event)
+            } catch (e) {
+              callback(e)
+              return
+            }
+          }
       Runtime: nodejs12.x
 
 Outputs:
   BucketName:
-    Description: S3 bucket name
-    Value: !Ref S3Bucket
+    Description: Site bucket name
+    Value: !Ref SiteBucket
   CloudfrontDomain:
     Description: The domain where the site is hosted in Cloudfront
     Value: !GetAtt Distribution.DomainName
@@ -425,6 +422,9 @@ Outputs:
     Description: The alias domain for the site
     Value: !Ref FullyQualifiedHostName
     Condition: NamedHost
+  UsersTable:
+    Description: DynamoDB table storing site users
+    Value: !Ref UsersTable
   UserPoolClientId:
     Description: Cognito User Pool Client id
     Value: !Ref UserPoolClient
@@ -434,6 +434,3 @@ Outputs:
   IdentityPoolId:
     Description: Cognito Identity Pool id
     Value: !Ref IdentityPool
-  UsersTable:
-    Description: DynamoDB table storing site users
-    Value: !Ref UsersTable

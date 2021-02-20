@@ -10,6 +10,11 @@ import 'video.js/dist/video-js.css'
 
 const VideoPage = ({
   data: {
+    site: {
+      siteMetadata: {
+        siteURL
+      }
+    },
     videosYaml: {
       fields: {
         baseName,
@@ -35,7 +40,7 @@ const VideoPage = ({
   return (
     <Layout>
       <Helmet titleTemplate={`%s -- ${label}`}>
-        <meta name="og:image" content={thumbnail} />
+        <meta name="og:image" content={`${siteURL}${thumbnail}`} />
         <meta name="og:title" content={label} />
       </Helmet>
       <WithAuth>
@@ -62,6 +67,11 @@ const VideoPage = ({
 
 export const query = graphql`
   query($slug: String!, $image: String!) {
+    site {
+      siteMetadata {
+        siteURL
+      }
+    }
     videosYaml(fields: { slug: { eq: $slug } }) {
       fields {
         baseName
@@ -96,6 +106,11 @@ export default VideoPage
 
 VideoPage.propTypes = {
   data: PropTypes.shape({
+    site: PropTypes.shape({
+      siteMetadata: PropTypes.shape({
+        siteURL: PropTypes.string.isRequired
+      })
+    }),
     videosYaml: PropTypes.shape({
       fields: PropTypes.shape({
         baseName: PropTypes.string.isRequired,

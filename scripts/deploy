@@ -6,6 +6,6 @@ set -o allexport
 source .env.production
 set +o allexport
 
-aws s3 sync --delete public/ s3://$SITE_BUCKET/
+npx gatsby-plugin-s3 deploy
 
 scripts/update_cors.js
