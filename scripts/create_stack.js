@@ -31,6 +31,12 @@ async function createStack () {
     }, {
       ParameterKey: 'VideoAssetArn',
       ParameterValue: process.env.VIDEO_ASSET_ARN
+    }, {
+      ParameterKey: 'AccessAdminEmail',
+      ParameterValue: process.env.ACCESS_ADMIN_EMAIL
+    }, {
+      ParameterKey: 'AccessSourceEmail',
+      ParameterValue: process.env.ACCESS_SOURCE_EMAIL
     }]
 
     if (StackName === 'inside-story') {
