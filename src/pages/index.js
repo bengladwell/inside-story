@@ -7,9 +7,7 @@ import VideoList from '../components/video_list'
 import Auth from '../services/auth'
 import WithAuth from '../components/with_auth'
 
-if (typeof window !== 'undefined' && window.location.hash) {
-  Auth.receive(window.location.hash)
-}
+Auth.receive(typeof window !== 'undefined' && window.location.hash)
 
 const IndexPage = ({ data }) => {
   const videos = data.allVideosYaml.edges.map(edge => ({

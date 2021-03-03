@@ -12,11 +12,18 @@ const redirectUri = process.env.NODE_ENV === 'development'
 
 class Auth {
   static receive (hashString) {
-    if (!hashString.match(/error=/)) {
-      window.localStorage.setItem('cognito-user', hashString.substr(1))
+    if (typeof window !== 'undefined' && hashString) {
       window.history.replaceState({}, document.title, window.location.href.replace(hashString, ''))
-    } else if (hashString.match(/Unknown.user/)) {
-      window.history.replaceState({}, document.title, window.location.href.replace(hashString, ''))
+
+      if (!hashString.match(/error=/)) {
+        window.localStorage.setItem('cognito-user', hashString.substr(1))
+      } else {
+        const matchData = decodeURIComponent(hashString).replaceAll('+', ' ').match(/email=([^;]+?);.+?name=([\w\s]+)/)
+        if (matchData) {
+          const [, email, name] = matchData
+          window.sessionStorage.setItem('unauthorized-user', JSON.stringify({ email, name }))
+        }
+      }
     }
   }
 

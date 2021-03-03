@@ -18,6 +18,12 @@ Parameters:
   VideoAssetArn:
     Type: String
     Description: Location of stored video assets as ARN + path; e.g. arn:aws:s3:::somebucket/assets/*
+  AccessAdminEmail:
+    Type: String
+    Description: The email address to which access request notifications will be sent
+  AccessSourceEmail:
+    Type: String
+    Description: The email address from which access request notifications will be sent
 
 Conditions:
   NamedHost: !And
@@ -311,6 +317,12 @@ Resources:
               - 'logs:PutLogEvents'
             Resource:
               - '*'
+          - Effect: Allow
+            Action:
+              - 'ses:SendEmail'
+              - 'ses:SendRawEmail'
+            Resource:
+              - '*'
 
   AuthorizerFunctionRole:
     Type: 'AWS::IAM::Role'
@@ -348,10 +360,13 @@ Resources:
       Environment:
         Variables:
           USER_TABLE: !Ref UsersTable
+          ACCESS_ADMIN_EMAIL: !Ref AccessAdminEmail
+          ACCESS_SOURCE_EMAIL: !Ref AccessSourceEmail
       Code:
         ZipFile: |
           const AWS = require('aws-sdk')
           const dynamodb = new AWS.DynamoDB()
+          const ses = new AWS.SES()
 
           exports.handler = async (event, context, callback) => {
             const getItemParams = {
@@ -365,16 +380,31 @@ Resources:
 
             try {
               const data = await dynamodb.getItem(getItemParams).promise()
+              const { email, name } = event.request.userAttributes
 
               if (!Object.keys(data).length) {
+                const notification = {
+                  Destination: {
+                    ToAddresses: [process.env.ACCESS_ADMIN_EMAIL]
+                  },
+                  Message: {
+                    Body: {
+                      Text: { Data: `${name} <${email}> has requested access` }
+                    },
+
+                    Subject: { Data: `Access request: ${name} <${email}>` }
+                  },
+                  Source: process.env.ACCESS_SOURCE_EMAIL
+                }
+
                 await dynamodb.putItem({
                   TableName: process.env.USER_TABLE,
                   Item: {
                     email: {
-                      S: event.request.userAttributes.email
+                      S: email
                     },
                     name: {
-                      S: event.request.userAttributes.name
+                      S: name
                     },
                     is_approved: {
                       BOOL: false
@@ -385,19 +415,20 @@ Resources:
                   }
                 }).promise()
 
-                callback(new Error("Unknown user"), event)
+                await ses.sendEmail(notification).promise()
+
+                callback(new Error(`Unknown user; email=${email}; name=${name}`), event)
                 return
               }
 
               if (!(data.Item.is_approved && data.Item.is_approved.BOOL)) {
-                callback(new Error("Unapproved user"), event)
+                callback(new Error(`Unapproved user; email=${email}; name=${name}`), event)
                 return
               }
 
               callback(null, event)
             } catch (e) {
               callback(e)
-              return
             }
           }
       Runtime: nodejs12.x
