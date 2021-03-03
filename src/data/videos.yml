@@ -1,3 +1,8 @@
+- dir: 2021-Hudson-Year-13
+  base_name: 2021_Hudson_Year_13
+  label: Hudson Year 13
+  year: 2021
+  image: 2021_Hudson_Year_13.jpg
 - dir: 2020-Mesfin-Year-11
   base_name: 2020_Mesfin_Year_11
   label: Mesfin Year 11
