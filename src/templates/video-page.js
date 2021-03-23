@@ -43,25 +43,25 @@ const VideoPage = ({
         <meta name="og:image" content={`${siteURL}${thumbnail}`} />
         <meta name="og:title" content={label} />
       </Helmet>
-      <WithAuth>
-        <h1>{label}</h1>
-        <VideoPlayer
-          controls={true}
-          height={432}
-          width={768}
-          poster={poster}
-          html5={{ vhs: { withCredentials: true } }}
-        >
-          <source
-            src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/hls/${baseName}.m3u8`}
-            type="application/x-mpegURL"
-          />
-          <source
-            src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/dash/${baseName}.mpd`}
-            type="application/dash+xml"
-          />
-        </VideoPlayer>
-      </WithAuth>
+      { /* <WithAuth> */ }
+      <h1>{label}</h1>
+      <VideoPlayer
+        controls={true}
+        height={432}
+        width={768}
+        poster={poster}
+        html5={{ vhs: { withCredentials: true } }}
+      >
+        <source
+          src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/hls/${baseName}.m3u8`}
+          type="application/x-mpegURL"
+        />
+        <source
+          src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/dash/${baseName}.mpd`}
+          type="application/dash+xml"
+        />
+      </VideoPlayer>
+      { /* </WithAuth> */ }
     </Layout>
   )
 }

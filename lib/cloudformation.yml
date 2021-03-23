@@ -238,6 +238,12 @@ Resources:
       ProtocolType: HTTP
       Target: !GetAtt SignerFunction.Arn
       RouteKey: !Sub ["GET ${SignerPath}", { SignerPath: !Ref SignerPath }]
+      CorsConfiguration:
+        AllowCredentials: True
+        AllowOrigins:
+          - !Sub [ "https://${SiteAssetDomain}", { SiteAssetDomain: !Ref SiteAssetDomain }]
+        AllowMethods:
+          - GET
 
   AuthorizerDomainName:
     Type: AWS::ApiGatewayV2::DomainName
@@ -405,7 +411,7 @@ Resources:
             - { Site: !GetAtt Distribution.DomainName }
           - !Sub
             - https://${Site}/
-            - { Site: !Ref FullyQualifiedHostName }
+            - { Site: !Ref SiteAssetDomain }
         - - http://localhost:8000/
           - !Sub
             - https://${Site}/
@@ -418,7 +424,7 @@ Resources:
             - { Site: !GetAtt Distribution.DomainName }
           - !Sub
             - https://${Site}/
-            - { Site: !Ref FullyQualifiedHostName }
+            - { Site: !Ref SiteAssetDomain }
         - - http://localhost:8000/
           - !Sub
             - https://${Site}/

@@ -18,12 +18,11 @@ const IndexPage = ({ data }) => {
     image: data.allFile.edges.find(fileEdge => fileEdge.node.base === edge.node.fields.image)
   }))
 
-  // <WithAuth>
-  //   <VideoList videos={videos} />
-  // </WithAuth>
   return (
     <Layout>
+      { /* <WithAuth> */ }
       <VideoList videos={videos} />
+      { /* </WithAuth> */ }
     </Layout>
   )
 }

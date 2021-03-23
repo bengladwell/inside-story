@@ -4,7 +4,7 @@ import User from '../models/user'
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
 const redirectUri = process.env.NODE_ENV === 'development'
   ? encodeURIComponent('http://localhost:8000/')
-  : encodeURIComponent(`https://${process.env.CLOUDFRONT_DOMAIN}/`)
+  : encodeURIComponent(`https://${process.env.SITE_DOMAIN}/`)
 
 class Auth {
   static receive (hashString) {

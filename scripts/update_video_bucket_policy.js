@@ -34,7 +34,7 @@ async function putBucketPolicy (policy) {
       AWS: `arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`
     },
     Action: 's3:GetObject',
-    Resource: 'arn:aws:s3:::transcodekit/assets/*'
+    Resource: `arn:aws:s3:::${process.env.VIDEO_ASSET_BUCKET}${process.env.VIDEO_ASSET_PATH}/*`
   }
 
   let newPolicy
@@ -66,5 +66,6 @@ async function putBucketPolicy (policy) {
     }
   }
 
+  console.log(`Adding policy statement for CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`)
   await putBucketPolicy(newPolicy)
 })()

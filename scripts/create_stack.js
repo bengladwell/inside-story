@@ -86,6 +86,9 @@ async function createStack () {
         ? `${process.env.SITE_ASSET_HOST_NAME}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
         : `${StackName}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
     }, {
+      ParameterKey: 'SignerPath',
+      ParameterValue: process.env.SIGNER_PATH
+    }, {
       ParameterKey: 'SignedCookieDomain',
       ParameterValue: process.env.HOSTED_ZONE_DOMAIN
     }]

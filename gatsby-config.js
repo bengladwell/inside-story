@@ -6,7 +6,7 @@ module.exports = {
     title: 'Gladwell Family Videos',
     description: 'Birthday videos for Hudson and Mesfin',
     author: '@bengladwell',
-    siteURL: `https://${process.env.CLOUDFRONT_DOMAIN}`
+    siteURL: `https://${process.env.SITE_DOMAIN}`
   },
   plugins: [
     {
@@ -20,7 +20,7 @@ module.exports = {
     {
       resolve: 'gatsby-plugin-canonical-urls',
       options: {
-        siteUrl: `https://${process.env.CLOUDFRONT_DOMAIN}`
+        siteUrl: `https://${process.env.SITE_DOMAIN}`
       }
     },
     'gatsby-plugin-sass',

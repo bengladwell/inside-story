@@ -29,24 +29,56 @@ async function putCorsRules (rules) {
   return s3.putBucketCors({ Bucket: videoAssetBucket, CORSConfiguration: rules }).promise()
 }
 
-function hasRule (rules) {
-  return rules.CORSRules.find((rule) =>
-    rule.AllowedOrigins.includes(`https://${process.env.CLOUDFRONT_DOMAIN}`))
+async function getBucketPolicy () {
+  return s3.getBucketPolicy({ Bucket: videoAssetBucket }).promise()
 }
 
-// TODO: transform to remove S3 Policy Statement
+async function putBucketPolicy (policy) {
+  return s3.putBucketPolicy({ Bucket: videoAssetBucket, Policy: JSON.stringify(policy) }).promise()
+}
+
+function hasRule (rules) {
+  return rules.CORSRules.find((rule) =>
+    rule.AllowedOrigins.includes(`https://${process.env.SITE_DOMAIN}`))
+}
 
 async function removeCORSRule () {
   const corsRules = await getCorsRules()
   if (!hasRule(corsRules)) {
     console.log('CORS rule does not exist; skipping')
   } else {
-    console.log(`Removing CORS rule for ${process.env.CLOUDFRONT_DOMAIN}`)
+    console.log(`Removing CORS rule for ${process.env.SITE_DOMAIN}`)
     const newRules = {
       CORSRules: corsRules.CORSRules.filter(rule =>
-        !rule.AllowedOrigins.includes(`https://${process.env.CLOUDFRONT_DOMAIN}`))
+        !rule.AllowedOrigins.includes(`https://${process.env.SITE_DOMAIN}`))
     }
     await putCorsRules(newRules)
+  }
+}
+
+async function removeBucketPolicyStatement () {
+  const stack = await stackName()
+  const statement = {
+    Sid: stack,
+    Effect: 'Allow',
+    Principal: {
+      AWS: `arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`
+    },
+    Action: 's3:GetObject',
+    Resource: `arn:aws:s3:::${process.env.VIDEO_ASSET_BUCKET}${process.env.VIDEO_ASSET_PATH}/*`
+  }
+  const bucketPolicyString = await getBucketPolicy()
+  const bucketPolicy = JSON.parse(bucketPolicyString.Policy)
+
+  if (!bucketPolicy.Statement.find(s => _.isEqual(s, statement))) {
+    console.log('Policy statement does not exist; skipping')
+  } else {
+    console.log(`Removing policy statement for CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`)
+    const newPolicy = {
+      ...bucketPolicy,
+      Statement: bucketPolicy.Statement.filter(s => !_.isEqual(s, statement))
+    }
+    await putBucketPolicy(newPolicy)
   }
 }
 
@@ -100,6 +132,9 @@ async function destroyStack () {
 
     console.log('Removing CORS rule')
     await removeCORSRule()
+
+    console.log('Removing video bucket policy statement')
+    await removeBucketPolicyStatement()
 
     console.log('Destroying S3 objects')
     const objects = await listObjects()
