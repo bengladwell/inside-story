@@ -18,14 +18,16 @@ for ENV in development production; do
   cp -f -v .env .env.$ENV
   SITE_BUCKET=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "BucketName").OutputValue'`
   echo "SITE_BUCKET=$SITE_BUCKET" >> .env.$ENV
-  IDENTITY_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "IdentityPoolId").OutputValue'`
-  echo "IDENTITY_POOL_ID=$IDENTITY_POOL_ID" >> .env.$ENV
-  USER_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolId").OutputValue'`
-  echo "USER_POOL_ID=$USER_POOL_ID" >> .env.$ENV
-  USER_POOL_DOMAIN=$STACK_NAME
-  echo "USER_POOL_DOMAIN=$USER_POOL_DOMAIN" >> .env.$ENV
-  USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
-  echo "USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID" >> .env.$ENV
-  CLOUDFRONT_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "CloudfrontDomain").OutputValue'`
-  echo "CLOUDFRONT_DOMAIN=$CLOUDFRONT_DOMAIN" >> .env.$ENV
+  USER_POOL_NAME=$STACK_NAME
+  echo "USER_POOL_NAME=$USER_POOL_NAME" >> .env.$ENV
+  SITE_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SiteDomain").OutputValue'`
+  echo "SITE_DOMAIN=$SITE_DOMAIN" >> .env.$ENV
+  VIDEO_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoDomain").OutputValue'`
+  echo "VIDEO_DOMAIN=$VIDEO_DOMAIN" >> .env.$ENV
+  SIGNER_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SignerDomain").OutputValue'`
+  echo "SIGNER_DOMAIN=$SIGNER_DOMAIN" >> .env.$ENV
+  SIGNER_PATH=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SignerPath").OutputValue'`
+  echo "SIGNER_PATH=$SIGNER_PATH" >> .env.$ENV
+  VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoAssetOriginAccessIdentity").OutputValue'`
+  echo "VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=$VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY" >> .env.$ENV
 done

@@ -18,10 +18,31 @@ async function stackName () {
   return branchName === 'master' ? 'inside-story' : branchName
 }
 
+async function genPrivateKey () {
+  const { stdout, stderr } = await exec('openssl genrsa 2048')
+  if (stderr && !stderr.match(/^Generating RSA private key, 2048 bit long modulus/)) {
+    throw new Error(stderr)
+  }
+
+  return stdout.substring(0, stdout.length - 1)
+}
+
+async function genPublicKey (privateKey) {
+  const { stdout, stderr } = await exec(`echo "${privateKey}" | openssl rsa -pubout`)
+  if (stderr && !stderr.match(/^writing RSA key/)) {
+    throw new Error(stderr)
+  }
+
+  return stdout.substring(0, stdout.length - 1)
+}
+
 async function createStack () {
   try {
     const cfTemplate = await readFile('lib/cloudformation.yml', 'utf8')
     const StackName = await stackName()
+    const privateKey = await genPrivateKey()
+    const uriEncodedPrivateKey = encodeURI(privateKey)
+    const publicKey = await genPublicKey(privateKey)
     const Parameters = [{
       ParameterKey: 'FacebookAppId',
       ParameterValue: process.env.FACEBOOK_APP_ID
@@ -29,25 +50,45 @@ async function createStack () {
       ParameterKey: 'FacebookAppSecret',
       ParameterValue: process.env.FACEBOOK_APP_SECRET
     }, {
-      ParameterKey: 'VideoAssetArn',
-      ParameterValue: process.env.VIDEO_ASSET_ARN
-    }, {
       ParameterKey: 'AccessAdminEmail',
       ParameterValue: process.env.ACCESS_ADMIN_EMAIL
     }, {
       ParameterKey: 'AccessSourceEmail',
       ParameterValue: process.env.ACCESS_SOURCE_EMAIL
+    }, {
+      ParameterKey: 'VideoAssetBucket',
+      ParameterValue: process.env.VIDEO_ASSET_BUCKET
+    }, {
+      ParameterKey: 'VideoAssetPath',
+      ParameterValue: process.env.VIDEO_ASSET_PATH
+    }, {
+      ParameterKey: 'VideoPrivateKeyUriEncoded',
+      ParameterValue: uriEncodedPrivateKey
+    }, {
+      ParameterKey: 'VideoPublicKey',
+      ParameterValue: publicKey
+    }, {
+      ParameterKey: 'HostedZoneId',
+      ParameterValue: process.env.HOSTED_ZONE_ID
+    }, {
+      ParameterKey: 'SiteAssetDomain',
+      ParameterValue: StackName === 'inside-story'
+        ? `${process.env.SITE_ASSET_HOST_NAME}.${process.env.HOSTED_ZONE_DOMAIN}`
+        : `${StackName}.${process.env.HOSTED_ZONE_DOMAIN}`
+    }, {
+      ParameterKey: 'VideoAssetDomain',
+      ParameterValue: StackName === 'inside-story'
+        ? `${process.env.SITE_ASSET_HOST_NAME}-videos.${process.env.HOSTED_ZONE_DOMAIN}`
+        : `${StackName}-videos.${process.env.HOSTED_ZONE_DOMAIN}`
+    }, {
+      ParameterKey: 'SignerDomain',
+      ParameterValue: StackName === 'inside-story'
+        ? `${process.env.SITE_ASSET_HOST_NAME}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
+        : `${StackName}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
+    }, {
+      ParameterKey: 'SignedCookieDomain',
+      ParameterValue: process.env.HOSTED_ZONE_DOMAIN
     }]
-
-    if (StackName === 'inside-story') {
-      Parameters.push({
-        ParameterKey: 'HostedZoneId',
-        ParameterValue: process.env.HOSTED_ZONE_ID
-      }, {
-        ParameterKey: 'FullyQualifiedHostName',
-        ParameterValue: process.env.FULLY_QUALIFIED_HOST_NAME
-      })
-    }
 
     return await cloudFormation.createStack({
       StackName,

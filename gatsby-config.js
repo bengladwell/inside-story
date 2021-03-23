@@ -14,7 +14,7 @@ module.exports = {
       options: {
         bucketName: process.env.SITE_BUCKET || 'inside-story',
         protocol: 'https',
-        hostname: process.env.CLOUDFRONT_DOMAIN
+        hostname: process.env.SITE_DOMAIN
       }
     },
     {

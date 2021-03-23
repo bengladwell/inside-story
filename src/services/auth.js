@@ -1,11 +1,7 @@
 import CognitoIdentityServiceProvider from 'aws-sdk/clients/cognitoidentityserviceprovider'
-import CognitoIdentity from 'aws-sdk/clients/cognitoidentity'
 import User from '../models/user'
 
 const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
-const cognitoIdentity = new CognitoIdentity({ region: 'us-east-1' })
-const userPool = `cognito-idp.us-east-1.amazonaws.com/${process.env.USER_POOL_ID}`
-const identityPoolId = process.env.IDENTITY_POOL_ID
 const redirectUri = process.env.NODE_ENV === 'development'
   ? encodeURIComponent('http://localhost:8000/')
   : encodeURIComponent(`https://${process.env.CLOUDFRONT_DOMAIN}/`)
@@ -28,7 +24,7 @@ class Auth {
   }
 
   static login () {
-    window.location = `https://${process.env.USER_POOL_DOMAIN}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Facebook`
+    window.location = `https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Facebook`
   }
 
   constructor () {
@@ -43,6 +39,10 @@ class Auth {
     }
   }
 
+  authorize () {
+    return fetch(`https://${process.env.SIGNER_DOMAIN}${process.env.SIGNER_PATH}`, { method: 'GET', credentials: 'include' })
+  }
+
   getUser () {
     if (!this.idToken) {
       return Promise.resolve()
@@ -54,36 +54,6 @@ class Auth {
       .then(data => User.fromFacebook(data))
       .catch(err => {
         if (err.message.match(/Token has expired/)) {
-          this.clear()
-        } else {
-          throw err
-        }
-      })
-  }
-
-  authorizeUser () {
-    if (!this.idToken) {
-      return Promise.resolve()
-    }
-
-    return cognitoIdentity.getId({
-      IdentityPoolId: identityPoolId,
-      Logins: {
-        [userPool]: this.idToken
-      }
-    })
-      .promise()
-      .then(({ IdentityId }) => {
-        return cognitoIdentity.getCredentialsForIdentity({
-          IdentityId,
-          Logins: {
-            [userPool]: this.idToken
-          }
-        }).promise()
-      })
-      .then(({ Credentials: credentials }) => credentials)
-      .catch(err => {
-        if (err.message.match(/Token expired/)) {
           this.clear()
         } else {
           throw err

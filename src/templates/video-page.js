@@ -50,13 +50,14 @@ const VideoPage = ({
           height={432}
           width={768}
           poster={poster}
+          html5={{ vhs: { withCredentials: true } }}
         >
           <source
-            src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/hls/${baseName}.m3u8`}
+            src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/hls/${baseName}.m3u8`}
             type="application/x-mpegURL"
           />
           <source
-            src={`https://transcodekit.s3.amazonaws.com/assets/${baseName}/dash/${baseName}.mpd`}
+            src={`https://${process.env.VIDEO_DOMAIN}/${baseName}/dash/${baseName}.mpd`}
             type="application/dash+xml"
           />
         </VideoPlayer>

@@ -1,23 +1,42 @@
 AWSTemplateFormatVersion: 2010-09-09
 
 Parameters:
-  FullyQualifiedHostName:
+  SiteAssetDomain:
     Type: String
-    Description: Optional fully qualified hostname for site; requires HostedZoneId
-    Default: ""
+    Description: Fully qualified hostname for site assets
+  VideoAssetDomain:
+    Type: String
+    Description: Fully qualified hostname for video assets
+  SignerDomain:
+    Type: String
+    Description: Fully qualified hostname for signer route
+  SignerPath:
+    Type: String
+    Description: Signer route path including leading /
   HostedZoneId:
     Type: String
-    Description: Route53 Hosted Zone Id; required when using FullyQualifiedHostName
-    Default: ""
+    Description: Route53 Hosted Zone Id
+  VideoPublicKey:
+    Type: String
+    Description: Public key used for signing cookies for access to video assets
+  VideoPrivateKeyUriEncoded:
+    Type: String
+    Description: Private key used for signing cookies for access to video assets, URI encoded
+  SignedCookieDomain:
+    Type: String
+    Description: Domain used for the signed cookie that gives access to video assets
   FacebookAppId:
     Type: String
     Description: Facebook client_id for authorizing Facebook app
   FacebookAppSecret:
     Type: String
     Description: Facebook client_secret for authorizing Facebook app
-  VideoAssetArn:
+  VideoAssetBucket:
     Type: String
-    Description: Location of stored video assets as ARN + path; e.g. arn:aws:s3:::somebucket/assets/*
+    Description: Bucket containing stored video assets
+  VideoAssetPath:
+    Type: String
+    Description: Optional path for video assets in VideoAssetBucket; start but do not end with /
   AccessAdminEmail:
     Type: String
     Description: The email address to which access request notifications will be sent
@@ -25,39 +44,29 @@ Parameters:
     Type: String
     Description: The email address from which access request notifications will be sent
 
-Conditions:
-  NamedHost: !And
-    - !Not
-      - !Equals
-        - !Ref FullyQualifiedHostName
-        - ""
-    - !Not
-      - !Equals
-        - !Ref HostedZoneId
-        - ""
 Rules:
-  fullyQualifiedHostNameRequired:
-    RuleCondition: !Not
-      - !Equals
-        - !Ref HostedZoneId
-        - ""
+  domainParamsRequired:
     Assertions:
       - Assert: !Not
         - !Equals
-          - !Ref FullyQualifiedHostName
+          - !Ref SiteAssetDomain
           - ""
-        AssertDescription: When HostedZoneId is used, FullyQualifiedHostName is required
-  hostedZoneIdRequired:
-    RuleCondition: !Not
-      - !Equals
-        - !Ref FullyQualifiedHostName
-        - ""
-    Assertions:
+      - Assert: !Not
+        - !Equals
+          - !Ref VideoAssetDomain
+          - ""
+      - Assert: !Not
+        - !Equals
+          - !Ref SignerPath
+          - ""
+      - Assert: !Not
+        - !Equals
+          - !Ref SignerDomain
+          - ""
       - Assert: !Not
         - !Equals
           - !Ref HostedZoneId
           - ""
-        AssertDescription: When FullyQualifiedHostName is used, HostedZoneId is required
   facebookParamsRequired:
     Assertions:
       - Assert: !Not
@@ -70,13 +79,24 @@ Rules:
           - !Ref FacebookAppSecret
           - ""
         AssertDescription: FacebookAppSecret is required
-  videoAssetArnRequired:
+  videoParamsRequired:
     Assertions:
       - Assert: !Not
         - !Equals
-          - !Ref VideoAssetArn
+          - !Ref VideoAssetBucket
           - ""
-        AssertDescription: VideoAssetArn is required
+      - Assert: !Not
+        - !Equals
+          - !Ref VideoPrivateKeyUriEncoded
+          - ""
+      - Assert: !Not
+        - !Equals
+          - !Ref VideoPublicKey
+          - ""
+      - Assert: !Not
+        - !Equals
+          - !Ref SignedCookieDomain
+          - ""
 
 Resources:
   SiteBucket:
@@ -86,14 +106,78 @@ Resources:
       WebsiteConfiguration:
         IndexDocument: index.html
 
-  Certificate:
+  VideoDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Sub ["${VideoAssetBucket}.s3.${Region}.amazonaws.com", { VideoAssetBucket: !Ref VideoAssetBucket, Region: !Ref AWS::Region }]
+            OriginPath: !Ref VideoAssetPath
+            Id: video-assets
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub ["origin-access-identity/cloudfront/${VideoAssetOriginAccessIdentity}", { VideoAssetOriginAccessIdentity: !Ref VideoAssetOriginAccessIdentity }]
+        Enabled: true
+        HttpVersion: http2
+        Aliases:
+          - !Ref VideoAssetDomain
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          Compress: true
+          TargetOriginId: video-assets
+          ViewerProtocolPolicy: redirect-to-https
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6 # Managed-CachingOptimized
+          OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf # Managed-CORS-S3Origin
+          TrustedKeyGroups:
+            - !Ref VideoKeyGroup
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          SslSupportMethod: "sni-only"
+          MinimumProtocolVersion: "TLSv1"
+          AcmCertificateArn: !Ref VideoCertificate
+        IPV6Enabled: true
+
+  VideoKeyGroup:
+    Type: AWS::CloudFront::KeyGroup
+    Properties:
+      KeyGroupConfig:
+        Name: !Ref AWS::StackName
+        Items:
+          - !Ref CFVideoPublicKey
+
+  CFVideoPublicKey:
+    Type: AWS::CloudFront::PublicKey
+    Properties:
+      PublicKeyConfig:
+        CallerReference: !Ref AWS::StackName
+        Name: !Ref AWS::StackName
+        EncodedKey: !Ref VideoPublicKey
+
+  VideoAssetOriginAccessIdentity:
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
+    Properties:
+      CloudFrontOriginAccessIdentityConfig:
+        Comment: !Sub ["${StackName}-videos-cloudfront", { StackName: !Ref AWS::StackName }]
+
+  VideoCertificate:
     Type: AWS::CertificateManager::Certificate
-    Condition: NamedHost
     Properties:
       CertificateTransparencyLoggingPreference: ENABLED
-      DomainName: !Ref FullyQualifiedHostName
+      DomainName: !Ref VideoAssetDomain
       DomainValidationOptions:
-        - DomainName: !Ref FullyQualifiedHostName
+        - DomainName: !Ref VideoAssetDomain
+          HostedZoneId: !Ref HostedZoneId
+      ValidationMethod: DNS
+
+  Certificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      CertificateTransparencyLoggingPreference: ENABLED
+      DomainName: !Ref SiteAssetDomain
+      DomainValidationOptions:
+        - DomainName: !Ref SiteAssetDomain
           HostedZoneId: !Ref HostedZoneId
       ValidationMethod: DNS
 
@@ -108,10 +192,8 @@ Resources:
               OriginProtocolPolicy: http-only
         Enabled: true
         HttpVersion: http2
-        Aliases: !If
-          - NamedHost
-          - [!Ref FullyQualifiedHostName]
-          - !Ref AWS::NoValue
+        Aliases:
+          - !Ref SiteAssetDomain
         DefaultCacheBehavior:
           AllowedMethods:
             - GET
@@ -123,22 +205,148 @@ Resources:
           OriginRequestPolicyId: acba4595-bd28-49b8-b9fe-13317c0390fa # Managed-UserAgentRefererHeaders
         PriceClass: PriceClass_100
         ViewerCertificate:
-          CloudFrontDefaultCertificate: !If [NamedHost, !Ref AWS::NoValue, true]
-          SslSupportMethod: !If [NamedHost, "sni-only", !Ref AWS::NoValue]
-          MinimumProtocolVersion: !If [NamedHost, "TLSv1", !Ref AWS::NoValue]
-          AcmCertificateArn: !If [NamedHost, !Ref Certificate, !Ref AWS::NoValue]
+          SslSupportMethod: "sni-only"
+          MinimumProtocolVersion: "TLSv1"
+          AcmCertificateArn: !Ref Certificate
         IPV6Enabled: true
 
   DNSRecord:
     Type: AWS::Route53::RecordSet
-    Condition: NamedHost
     Properties:
       HostedZoneId: !Ref HostedZoneId
-      Name: !Ref FullyQualifiedHostName
+      Name: !Ref SiteAssetDomain
       Type: A
       AliasTarget:
         DNSName: !GetAtt Distribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2
+
+  VideoDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref VideoAssetDomain
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt VideoDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+
+  SignerAPI:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub ["${StackName}-signer", { StackName: !Ref AWS::StackName }]
+      Description: Proxies the cookie signing Lambda function
+      ProtocolType: HTTP
+      Target: !GetAtt SignerFunction.Arn
+      RouteKey: !Sub ["GET ${SignerPath}", { SignerPath: !Ref SignerPath }]
+
+  AuthorizerDomainName:
+    Type: AWS::ApiGatewayV2::DomainName
+    Properties:
+      DomainName: !Ref SignerDomain
+      DomainNameConfigurations:
+        - CertificateArn: !Ref SignerCertificate
+          CertificateName: !Sub ["${StackName}-signer", { StackName: !Ref AWS::StackName }]
+
+  SignerApiMapping:
+    Type: AWS::ApiGatewayV2::ApiMapping
+    Properties:
+      ApiId: !Ref SignerAPI
+      DomainName: !Ref AuthorizerDomainName
+      Stage: "$default"
+
+  SignerCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      CertificateTransparencyLoggingPreference: ENABLED
+      DomainName: !Ref SignerDomain
+      DomainValidationOptions:
+        - DomainName: !Ref SignerDomain
+          HostedZoneId: !Ref HostedZoneId
+      ValidationMethod: DNS
+
+  SignerDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Ref SignerDomain
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt AuthorizerDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt AuthorizerDomainName.RegionalHostedZoneId
+
+  SignerFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt SignerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub ["arn:aws:execute-api:${Region}:${Account}:${API}/*/*/authorize", { Region: !Ref AWS::Region, Account: !Ref AWS::AccountId, API: !Ref SignerAPI }]
+
+  SignerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ["${StackName}_Signer", { StackName: !Ref AWS::StackName }]
+      Description: Signs cookies for access to videos
+      Handler: index.handler
+      Role: !GetAtt SignerFunctionRole.Arn
+      Environment:
+        Variables:
+          CLOUDFRONT_KEY_PAIR_ID: !Ref CFVideoPublicKey
+          URI_ENCODED_PRIVATE_KEY: !Ref VideoPrivateKeyUriEncoded
+          COOKIE_DOMAIN: !Ref SignedCookieDomain
+          VIDEOS_URL: !Ref VideoAssetDomain
+      Code:
+        ZipFile: |
+          const AWS = require('aws-sdk')
+
+          exports.handler = async (event) => {
+            const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
+            const signer = new AWS.CloudFront.Signer(process.env.CLOUDFRONT_KEY_PAIR_ID, privateKey)
+            const now = new Date()
+            const cookie = signer.getSignedCookie({
+              policy: JSON.stringify({
+                Statement: [{
+                  Resource: `https://${process.env.VIDEOS_URL}/*`,
+                  Condition: {
+                    DateLessThan: {
+                      "AWS:EpochTime": Math.floor(now.setDate(now.getDate() + 30) / 1000)
+                    }
+                  }
+                }]
+              })
+            })
+
+            return {
+              statusCode: 200,
+              headers: {
+                "Content-Type": "application/json"
+              },
+              cookies: [
+                `CloudFront-Policy=${cookie['CloudFront-Policy']}; Domain=${process.env.COOKIE_DOMAIN}`,
+                `CloudFront-Key-Pair-Id=${cookie['CloudFront-Key-Pair-Id']}; Domain=${process.env.COOKIE_DOMAIN}`,
+                `CloudFront-Signature=${cookie['CloudFront-Signature']}; Domain=${process.env.COOKIE_DOMAIN}`,
+              ],
+            }
+          }
+      Runtime: nodejs12.x
+
+  SignerFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ["${StackName}_Signer", { StackName: !Ref AWS::StackName }]
+      Description: Allows Signer lambda function to...
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
   UserPool:
     Type: AWS::Cognito::UserPool
@@ -222,67 +430,6 @@ Resources:
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
         - Facebook
-
-  IdentityPool:
-    Type: AWS::Cognito::IdentityPool
-    Properties:
-      AllowUnauthenticatedIdentities: false
-      IdentityPoolName: !Ref AWS::StackName
-      CognitoIdentityProviders:
-        - ClientId: !Ref UserPoolClient
-          ProviderName: !GetAtt UserPool.ProviderName
-
-  IdentityPoolRoleAttachment:
-    Type: AWS::Cognito::IdentityPoolRoleAttachment
-    Properties:
-      IdentityPoolId: !Ref IdentityPool
-      Roles:
-        authenticated: !GetAtt UserRole.Arn
-
-  UserRole:
-    Type: 'AWS::IAM::Role'
-    Properties:
-      RoleName: !Sub ["${StackName}_LoggedInUser", { StackName: !Ref AWS::StackName }]
-      Description: Allows logged in users to read video assets
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Federated: cognito-identity.amazonaws.com
-          Action: sts:AssumeRoleWithWebIdentity
-          Condition:
-            StringEquals:
-              cognito-identity.amazonaws.com:aud: !Ref IdentityPool
-            ForAnyValue:StringLike:
-              cognito-identity.amazonaws.com:amr: authenticated
-      Policies:
-        - PolicyName: !Sub ["${StackName}_Cognito_Authenticated_Role", { StackName: !Ref AWS::StackName }]
-          PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-            - Effect: Allow
-              Action:
-                - 'mobileanalytics:PutEvents'
-                - 'cognito-sync:*'
-                - 'cognito-identity:*'
-              Resource: '*'
-      ManagedPolicyArns:
-        - !Ref AllowAccessVideoAssets
-
-  AllowAccessVideoAssets:
-    Type: 'AWS::IAM::ManagedPolicy'
-    Properties:
-      Description: 'Allows assets to site video assets'
-      ManagedPolicyName: !Sub ["${StackName}-AccessVideoAssets", { StackName: !Ref AWS::StackName }]
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          - Effect: Allow
-            Action:
-              - s3:GetObject
-            Resource:
-              - !Ref VideoAssetArn
 
   UsersTable:
     Type: AWS::DynamoDB::Table
@@ -437,18 +584,15 @@ Outputs:
   BucketName:
     Description: Site bucket name
     Value: !Ref SiteBucket
-  CloudfrontDomain:
-    Description: The domain where the site is hosted in Cloudfront
-    Value: !If
-      - NamedHost
-      - !Ref FullyQualifiedHostName
-      - !GetAtt Distribution.DomainName
-  UserPoolClientId:
-    Description: Cognito User Pool Client id
-    Value: !Ref UserPoolClient
-  UserPoolId:
-    Description: Cognito User Pool id
-    Value: !Ref UserPool
-  IdentityPoolId:
-    Description: Cognito Identity Pool id
-    Value: !Ref IdentityPool
+  SiteDomain:
+    Description: The CloudFront domain for site assets
+    Value: !Ref SiteAssetDomain
+  VideoDomain:
+    Description: The CloudFront domain for video assets
+    Value: !Ref VideoAssetDomain
+  SignerDomain:
+    Description: The CloudFront domain for signer route
+    Value: !Ref SignerDomain
+  VideoAssetOriginAccessIdentity:
+    Description: The ID for the origin access identity that will be used by the video CloudFront distribution
+    Value: !Ref VideoAssetOriginAccessIdentity

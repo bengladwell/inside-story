@@ -9,3 +9,4 @@ set +o allexport
 npx gatsby-plugin-s3 deploy
 
 scripts/update_cors.js
+scripts/update_video_bucket_policy.js

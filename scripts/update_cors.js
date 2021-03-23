@@ -15,7 +15,7 @@ async function putCorsRules (rules) {
 
 function hasRule (rules) {
   return rules.CORSRules.find((rule) =>
-    rule.AllowedOrigins.includes(`https://${process.env.CLOUDFRONT_DOMAIN}`))
+    rule.AllowedOrigins.includes(`https://${process.env.SITE_DOMAIN}`))
 }
 
 (async () => {
@@ -23,12 +23,12 @@ function hasRule (rules) {
   if (hasRule(corsRules)) {
     console.log('CORS rule exists; skipping')
   } else {
-    console.log(`Adding CORS rule for ${process.env.CLOUDFRONT_DOMAIN}`)
+    console.log(`Adding CORS rule for ${process.env.SITE_DOMAIN}`)
     const newRules = {
       CORSRules: corsRules.CORSRules.concat({
         AllowedHeaders: ['*'],
         AllowedMethods: ['HEAD', 'GET'],
-        AllowedOrigins: [`https://${process.env.CLOUDFRONT_DOMAIN}`],
+        AllowedOrigins: [`https://${process.env.SITE_DOMAIN}`],
         ExposeHeaders: []
       })
     }

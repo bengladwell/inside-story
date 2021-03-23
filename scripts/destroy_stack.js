@@ -34,6 +34,8 @@ function hasRule (rules) {
     rule.AllowedOrigins.includes(`https://${process.env.CLOUDFRONT_DOMAIN}`))
 }
 
+// TODO: transform to remove S3 Policy Statement
+
 async function removeCORSRule () {
   const corsRules = await getCorsRules()
   if (!hasRule(corsRules)) {
