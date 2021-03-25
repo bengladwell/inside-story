@@ -9,7 +9,7 @@ class User {
   }
 
   constructor ({ name = null, email = null, imageUrl = null, authorized = true }) {
-    Object.assign(this, { name, email, imageUrl })
+    Object.assign(this, { name, email, imageUrl, authorized })
   }
 }
 
