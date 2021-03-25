@@ -52,7 +52,7 @@ const Header = () => {
         </p>
         <p>{firstVideo.year} - {lastVideo.year}</p>
         <userContext.Consumer>
-          { user => user ? <User user={user} /> : <LoginWithFacebookButton /> }
+          { user => user && user.authorized ? <User user={user} /> : <LoginWithFacebookButton /> }
         </userContext.Consumer>
       </div>
     </header>

@@ -18,7 +18,7 @@ const LoginWithFacebookButton = () => {
     }
   `)
   return (
-    <button className="login-with-facebook-button" onClick={Auth.login}>
+    <button className="login-with-facebook-button" onClick={Auth.facebookLogin}>
       <Img fixed={data.file.childImageSharp.fixed} />
       Login with Facebook
     </button>

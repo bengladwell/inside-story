@@ -6,7 +6,7 @@ import UnauthMessage from './unauth_message'
 const WithAuth = ({ children }) => {
   return (
     <userContext.Consumer>
-      { user => user ? children : <UnauthMessage /> }
+      { user => user && user.authorized ? children : <UnauthMessage user={user} /> }
     </userContext.Consumer>
   )
 }

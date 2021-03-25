@@ -4,10 +4,7 @@ import PropTypes from 'prop-types'
 
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
-import Auth from '../services/auth'
 import WithAuth from '../components/with_auth'
-
-Auth.receive(typeof window !== 'undefined' && window.location.hash)
 
 const IndexPage = ({ data }) => {
   const videos = data.allVideosYaml.edges.map(edge => ({
@@ -20,9 +17,9 @@ const IndexPage = ({ data }) => {
 
   return (
     <Layout>
-      { /* <WithAuth> */ }
-      <VideoList videos={videos} />
-      { /* </WithAuth> */ }
+      <WithAuth>
+        <VideoList videos={videos} />
+      </WithAuth>
     </Layout>
   )
 }

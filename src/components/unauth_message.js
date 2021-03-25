@@ -1,19 +1,13 @@
 import React from 'react'
+import PropTypes from 'prop-types'
 
 import './unauth_message.scss'
 
-const UnauthMessage = () => {
-  const unknownUserString = typeof window !== 'undefined' && window.sessionStorage.getItem('unauthorized-user')
-  let unknownUser
-  try {
-    unknownUser = JSON.parse(unknownUserString)
-  } catch (e) {
-  }
-
-  return unknownUser
+const UnauthMessage = ({ user }) => {
+  return user
     ? (
       <div className="unauth-message unknown-message">
-        <p>Hi {unknownUser.name}!</p>
+        <p>Hi {user.name}!</p>
         <p>I have been notified that you would like to view this site.</p>
         <p>Assuming I know you, I{"'"}ll add you to the list and send you an email.</p>
       </div>
@@ -29,6 +23,10 @@ const UnauthMessage = () => {
         </p>
       </div>
     )
+}
+
+UnauthMessage.propTypes = {
+  user: PropTypes.object
 }
 
 export default UnauthMessage

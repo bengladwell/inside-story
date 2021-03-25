@@ -360,6 +360,7 @@ Resources:
       UserPoolName: !Ref AWS::StackName
       LambdaConfig:
         PreAuthentication: !GetAtt UserAuthorizerFunction.Arn
+        PreSignUp: !GetAtt UserAuthorizerFunction.Arn
       UsernameAttributes:
         - email
       UsernameConfiguration:
@@ -403,32 +404,22 @@ Resources:
         - email
         - openid
         - aws.cognito.signin.user.admin
-      CallbackURLs: !If
-        - NamedHost
-        - - http://localhost:8000/
-          - !Sub
-            - https://${Site}/
-            - { Site: !GetAtt Distribution.DomainName }
-          - !Sub
-            - https://${Site}/
-            - { Site: !Ref SiteAssetDomain }
-        - - http://localhost:8000/
-          - !Sub
-            - https://${Site}/
-            - { Site: !GetAtt Distribution.DomainName }
-      LogoutURLs: !If
-        - NamedHost
-        - - http://localhost:8000/
-          - !Sub
-            - https://${Site}/
-            - { Site: !GetAtt Distribution.DomainName }
-          - !Sub
-            - https://${Site}/
-            - { Site: !Ref SiteAssetDomain }
-        - - http://localhost:8000/
-          - !Sub
-            - https://${Site}/
-            - { Site: !GetAtt Distribution.DomainName }
+      CallbackURLs:
+        - http://localhost:8000/
+        - !Sub
+          - https://${Site}/
+          - { Site: !GetAtt Distribution.DomainName }
+        - !Sub
+          - https://${Site}/
+          - { Site: !Ref SiteAssetDomain }
+      LogoutURLs:
+        - http://localhost:8000/
+        - !Sub
+          - https://${Site}/
+          - { Site: !GetAtt Distribution.DomainName }
+        - !Sub
+          - https://${Site}/
+          - { Site: !Ref SiteAssetDomain }
       ClientName: site-users
       ExplicitAuthFlows:
         - ALLOW_USER_PASSWORD_AUTH
@@ -590,6 +581,9 @@ Outputs:
   BucketName:
     Description: Site bucket name
     Value: !Ref SiteBucket
+  UserPoolClientId:
+    Description: Cognito User Pool Client id
+    Value: !Ref UserPoolClient
   SiteDomain:
     Description: The CloudFront domain for site assets
     Value: !Ref SiteAssetDomain

@@ -8,7 +8,7 @@ class User {
     return new User({ name, email, imageUrl: pictureData.data.url })
   }
 
-  constructor ({ name = null, email = null, imageUrl = null }) {
+  constructor ({ name = null, email = null, imageUrl = null, authorized = true }) {
     Object.assign(this, { name, email, imageUrl })
   }
 }

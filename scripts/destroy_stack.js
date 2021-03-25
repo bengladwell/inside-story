@@ -34,7 +34,15 @@ async function getBucketPolicy () {
 }
 
 async function putBucketPolicy (policy) {
-  return s3.putBucketPolicy({ Bucket: videoAssetBucket, Policy: JSON.stringify(policy) }).promise()
+  if (!policy.Statement.length) {
+    return s3.deleteBucketPolicy({
+      Bucket: videoAssetBucket
+    }).promise()
+  }
+  return s3.putBucketPolicy({
+    Bucket: videoAssetBucket,
+    Policy: policy ? JSON.stringify(policy) : '{}'
+  }).promise()
 }
 
 function hasRule (rules) {

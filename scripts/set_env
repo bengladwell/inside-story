@@ -26,6 +26,8 @@ for ENV in development production; do
   echo "VIDEO_DOMAIN=$VIDEO_DOMAIN" >> .env.$ENV
   SIGNER_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SignerDomain").OutputValue'`
   echo "SIGNER_DOMAIN=$SIGNER_DOMAIN" >> .env.$ENV
+  USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
+  echo "USER_POOL_CLIENT_ID=$USER_POOL_CLIENT_ID" >> .env.$ENV
   VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoAssetOriginAccessIdentity").OutputValue'`
   echo "VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=$VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY" >> .env.$ENV
 done
