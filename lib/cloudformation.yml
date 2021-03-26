@@ -236,14 +236,52 @@ Resources:
       Name: !Sub ["${StackName}-signer", { StackName: !Ref AWS::StackName }]
       Description: Proxies the cookie signing Lambda function
       ProtocolType: HTTP
-      Target: !GetAtt SignerFunction.Arn
-      RouteKey: !Sub ["GET ${SignerPath}", { SignerPath: !Ref SignerPath }]
       CorsConfiguration:
         AllowCredentials: True
         AllowOrigins:
           - !Sub [ "https://${SiteAssetDomain}", { SiteAssetDomain: !Ref SiteAssetDomain }]
         AllowMethods:
           - GET
+        AllowHeaders:
+          - authorization
+
+  SignerRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref SignerAPI
+      AuthorizationType: JWT
+      AuthorizerId: !Ref SignerAuthorizer
+      RouteKey: !Sub ["GET ${SignerPath}", { SignerPath: !Ref SignerPath }]
+      Target: !Sub ["integrations/${Integration}", { Integration: !Ref SignerIntegration }]
+
+  SignerStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref SignerAPI
+      AutoDeploy: True
+      StageName: $default
+
+  SignerIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref SignerAPI
+      IntegrationMethod: GET
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt SignerFunction.Arn
+      PayloadFormatVersion: 2.0
+
+  SignerAuthorizer:
+    Type: AWS::ApiGatewayV2::Authorizer
+    Properties:
+      ApiId: !Ref SignerAPI
+      AuthorizerType: JWT
+      IdentitySource:
+        - "$request.header.Authorization"
+      JwtConfiguration:
+        Audience:
+          - !Ref UserPoolClient
+        Issuer: !GetAtt UserPool.ProviderURL
+      Name: !Ref AWS::StackName
 
   AuthorizerDomainName:
     Type: AWS::ApiGatewayV2::DomainName

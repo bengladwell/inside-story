@@ -63,7 +63,15 @@ class Auth {
   }
 
   authorizeUser () {
-    return fetch(`https://${process.env.SIGNER_DOMAIN}${process.env.SIGNER_PATH}`, { method: 'GET', credentials: 'include' })
+    if (!this.accessToken) throw new Error('Missing accessToken')
+
+    return fetch(`https://${process.env.SIGNER_DOMAIN}${process.env.SIGNER_PATH}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        Authorization: `Bearer ${this.accessToken}`
+      }
+    })
   }
 
   getUser () {
