@@ -47,6 +47,7 @@
   "license": "MIT",
   "scripts": {
     "build": "scripts/set_env && gatsby build",
+    "build_and_deploy": "scripts/set_env && gatsby build && scripts/deploy",
     "develop": "scripts/set_env && gatsby develop",
     "deploy": "scripts/deploy",
     "format": "prettier --write \"**/*.{js,jsx,json,md}\"",

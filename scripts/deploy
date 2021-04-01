@@ -6,7 +6,7 @@ set -o allexport
 source .env.production
 set +o allexport
 
-npx gatsby-plugin-s3 deploy
+npx gatsby-plugin-s3 deploy --yes
 
 scripts/update_cors.js
 scripts/update_video_bucket_policy.js

@@ -17,7 +17,7 @@ const VideoPlayer = ({ children, ...props }) => {
   return (
     <div>
       <div data-vjs-player>
-        <video ref={playerEl} className="video-js">
+        <video ref={playerEl} className="video-js vjs-fluid vjs-16-9">
           {children}
         </video>
       </div>

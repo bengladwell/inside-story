@@ -47,8 +47,6 @@ const VideoPage = ({
         <h1>{label}</h1>
         <VideoPlayer
           controls={true}
-          height={432}
-          width={768}
           poster={poster}
           html5={{ vhs: { withCredentials: true } }}
         >
