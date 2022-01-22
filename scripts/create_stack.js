@@ -50,6 +50,12 @@ async function createStack () {
       ParameterKey: 'FacebookAppSecret',
       ParameterValue: process.env.FACEBOOK_APP_SECRET
     }, {
+      ParameterKey: 'GoogleClientId',
+      ParameterValue: process.env.GOOGLE_CLIENT_ID
+    }, {
+      ParameterKey: 'GoogleClientSecret',
+      ParameterValue: process.env.GOOGLE_CLIENT_SECRET
+    }, {
       ParameterKey: 'AccessAdminEmail',
       ParameterValue: process.env.ACCESS_ADMIN_EMAIL
     }, {

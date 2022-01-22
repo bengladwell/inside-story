@@ -4,6 +4,7 @@ import './header.scss'
 import { userContext } from '../context'
 import User from './user'
 import LoginWithFacebookButton from './login_with_facebook_button'
+import LoginWithGoogleButton from './login_with_google_button'
 
 const Header = () => {
   const data = useStaticQuery(graphql`
@@ -52,7 +53,16 @@ const Header = () => {
         </p>
         <p>{firstVideo.year} - {lastVideo.year}</p>
         <userContext.Consumer>
-          { user => user && user.authorized ? <User user={user} /> : <LoginWithFacebookButton /> }
+          {
+            user => user && user.authorized
+              ? <User user={user} />
+              : (
+                <>
+                  <LoginWithFacebookButton />
+                  <LoginWithGoogleButton />
+                </>
+              )
+          }
         </userContext.Consumer>
       </div>
     </header>

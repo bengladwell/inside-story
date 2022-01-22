@@ -53,6 +53,10 @@ class Auth {
     window.location = `https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Facebook`
   }
 
+  static googleLogin () {
+    window.location = `https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Google`
+  }
+
   constructor () {
     this.accessToken = Cookies.get('accessToken')
     this.idToken = Cookies.get('idToken')
@@ -82,7 +86,7 @@ class Auth {
     return cognitoIdentityServiceProvider
       .getUser({ AccessToken: this.accessToken })
       .promise()
-      .then(data => User.fromFacebook(data))
+      .then(data => User.fromIdp(data))
       .catch(err => {
         if (err.message.match(/Token has expired/)) {
           this.clear()

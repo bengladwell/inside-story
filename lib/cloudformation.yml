@@ -31,6 +31,12 @@ Parameters:
   FacebookAppSecret:
     Type: String
     Description: Facebook client_secret for authorizing Facebook app
+  GoogleClientId:
+    Type: String
+    Description: Google client_id for authorizing Google sign in
+  GoogleClientSecret:
+    Type: String
+    Description: Google client_secret for authorizing Google sign in
   VideoAssetBucket:
     Type: String
     Description: Bucket containing stored video assets
@@ -79,6 +85,18 @@ Rules:
           - !Ref FacebookAppSecret
           - ""
         AssertDescription: FacebookAppSecret is required
+  googleParamsRequired:
+    Assertions:
+      - Assert: !Not
+        - !Equals
+          - !Ref GoogleClientId
+          - ""
+        AssertDescription: GoogleClientId is required
+      - Assert: !Not
+        - !Equals
+          - !Ref GoogleClientSecret
+          - ""
+        AssertDescription: GoogleClientSecret is required
   videoParamsRequired:
     Assertions:
       - Assert: !Not
@@ -421,6 +439,23 @@ Resources:
         name: name
         picture: picture
 
+  GoogleIdentityProvider:
+    Type: AWS::Cognito::UserPoolIdentityProvider
+    Properties:
+      UserPoolId: !Ref UserPool
+      ProviderType: Google
+      ProviderName: Google
+      ProviderDetails:
+        client_id: !Ref GoogleClientId
+        client_secret: !Ref GoogleClientSecret
+        authorize_scopes: profile email
+      AttributeMapping:
+        username: sub
+        email: email
+        name: name
+        picture: picture
+
+
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
@@ -431,6 +466,7 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     DependsOn:
       - FacebookIdentityProvider
+      - GoogleIdentityProvider
       - UserPoolDomain
     Properties:
       UserPoolId: !Ref UserPool
@@ -465,6 +501,7 @@ Resources:
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
         - Facebook
+        - Google
 
   UsersTable:
     Type: AWS::DynamoDB::Table

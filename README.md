@@ -42,3 +42,12 @@ Allows for every user to be specifically granted access by the administrator. Th
 ## For the truly hardcore, some UML sequence diagrams
 
 ![Blank diagram - Sequence Diagram](https://user-images.githubusercontent.com/686913/118129719-88833d00-b3ca-11eb-96fb-960ac0c51ace.png)
+
+## Development notes
+
+To start a new feature:
+* create a new branch (no underscores)
+* make changes to cloudformation.yml
+* `npm run stack:create`
+* `npm run stack:status` to check status or https://console.aws.amazon.com/cloudformation/home
+* `npm run develop`
