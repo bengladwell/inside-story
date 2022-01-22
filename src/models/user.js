@@ -8,7 +8,11 @@ class User {
     if (data.Username.match(/^google/)) {
       return new User({ name, email, imageUrl: picture })
     }
-    return new User({ name, email, imageUrl: JSON.parse(picture).data.url })
+    try {
+      return new User({ name, email, imageUrl: JSON.parse(picture).data.url })
+    } catch (e) {
+      return new User({ name, email })
+    }
   }
 
   constructor ({ name = null, email = null, imageUrl = null, authorized = true }) {
