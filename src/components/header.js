@@ -64,6 +64,15 @@ const Header = () => {
               )
           }
         </userContext.Consumer>
+        <Link
+          className="privacy"
+          to='/privacy/'
+          style={{
+            textDecoration: 'none'
+          }}
+        >
+          Privacy Policy
+        </Link>
       </div>
     </header>
   )
