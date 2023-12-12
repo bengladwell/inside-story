@@ -11,7 +11,7 @@ const UnauthMessage = ({ user }) => {
         <p>I have been notified that you would like to view this site.</p>
         <p>Assuming I know you, I{"'"}ll add you to the list and send you an email.</p>
       </div>
-    )
+      )
     : (
       <div className="unauth-message">
         <p>Hi!</p>
@@ -22,7 +22,7 @@ const UnauthMessage = ({ user }) => {
           Then you will be able to login with Facebook.
         </p>
       </div>
-    )
+      )
 }
 
 UnauthMessage.propTypes = {

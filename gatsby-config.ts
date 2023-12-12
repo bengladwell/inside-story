@@ -1,18 +1,26 @@
-require('dotenv').config({
+import type { GatsbyConfig } from 'gatsby'
+import dotenv from 'dotenv'
+
+dotenv.config({
   path: `.env.${process.env.NODE_ENV}`
 })
-module.exports = {
+
+const config: GatsbyConfig = {
   siteMetadata: {
     title: 'Gladwell Family Videos',
     description: 'Birthday videos for Hudson and Mesfin',
     author: '@bengladwell',
     siteURL: `https://${process.env.SITE_DOMAIN}`
   },
+  // More easily incorporate content into your pages through automatic TypeScript type generation and better GraphQL IntelliSense.
+  // If you use VSCode you can also use the GraphQL plugin
+  // Learn more at: https://gatsby.dev/graphql-typegen
+  graphqlTypegen: true,
   plugins: [
     {
       resolve: 'gatsby-plugin-s3',
       options: {
-        bucketName: process.env.SITE_BUCKET || 'inside-story',
+        bucketName: process.env.SITE_BUCKET ?? 'inside-story',
         protocol: 'https',
         hostname: process.env.SITE_DOMAIN
       }
@@ -24,15 +32,14 @@ module.exports = {
       }
     },
     'gatsby-plugin-sass',
-    'gatsby-plugin-react-helmet',
     {
       resolve: 'gatsby-source-filesystem',
       options: {
         name: 'images',
-        path: `${__dirname}/src/images`
-      }
+        path: './src/images/'
+      },
+      __key: 'images'
     },
-    'gatsby-plugin-lodash',
     'gatsby-transformer-yaml',
     {
       resolve: 'gatsby-source-filesystem',
@@ -41,22 +48,10 @@ module.exports = {
         path: './src/data/'
       }
     },
-    'gatsby-transformer-sharp',
+    'gatsby-plugin-image',
     'gatsby-plugin-sharp',
-    {
-      resolve: 'gatsby-plugin-manifest',
-      options: {
-        name: 'gatsby-starter-default',
-        short_name: 'starter',
-        start_url: '/',
-        background_color: '#663399',
-        theme_color: '#663399',
-        display: 'minimal-ui',
-        icon: 'src/images/gatsby-icon.png' // This path is relative to the root of the site.
-      }
-    }
-    // this (optional) plugin enables Progressive Web App + Offline functionality
-    // To learn more, visit: https://gatsby.dev/offline
-    // 'gatsby-plugin-offline',
+    'gatsby-transformer-sharp'
   ]
 }
+
+export default config

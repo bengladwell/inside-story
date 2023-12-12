@@ -1,7 +1,7 @@
 import React from 'react'
 import { useStaticQuery, graphql } from 'gatsby'
 import Auth from '../services/auth'
-import Img from 'gatsby-image'
+import { GatsbyImage, getImage } from 'gatsby-plugin-image'
 
 import './login_with_facebook_button.scss'
 
@@ -10,16 +10,17 @@ const LoginWithFacebookButton = () => {
     query FacebookLogo {
       file(relativePath: {eq: "f_logo_RGB-Blue_58.png"}) {
         childImageSharp {
-          fixed (height: 25, width: 25) {
-            ...GatsbyImageSharpFixed
-          }
+          gatsbyImageData(
+            width: 25
+            height: 25
+          )
         }
       }
     }
   `)
   return (
     <button className="login-with-facebook-button" onClick={Auth.facebookLogin}>
-      <Img fixed={data.file.childImageSharp.fixed} />
+      <GatsbyImage image={getImage(data.file)} />
       Login with Facebook
     </button>
   )

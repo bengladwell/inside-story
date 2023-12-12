@@ -1,23 +1,26 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'gatsby'
-import Img from 'gatsby-image'
+import { GatsbyImage, getImage } from 'gatsby-plugin-image'
 
 import './video_list.scss'
 
 // TODO: video needs washed out a bit; title over top
-const VideoList = ({ videos }) => (
+const VideoList = ({ videos }) => {
+  return (
   <ul className='video-list'>
-    {videos.map(({ id, slug, label, image }) => (
+    {videos.map(({ id, slug, label, image }) => {
+      return (
       <li className="video" key={id}>
         <Link to={`/${slug}`}>
-          <Img fixed={image.node.childImageSharp.fixed} />
+          { image && <GatsbyImage image={getImage(image.node.childImageSharp)} /> }
           <div className="video__name">{label}</div>
         </Link>
       </li>
-    ))}
+    )})}
   </ul>
 )
+}
 
 VideoList.propTypes = {
   videos: PropTypes.arrayOf(PropTypes.shape({
