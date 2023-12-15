@@ -2601,10 +2601,23 @@ type GoogleLogoQueryVariables = Exact<{ [key: string]: never; }>;
 
 type GoogleLogoQuery = { readonly file: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null };
 
+type IndexPageQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+type IndexPageQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly slug: string | null, readonly label: string | null, readonly year: number | null, readonly image: string | null } | null } }> }, readonly allFile: { readonly edges: ReadonlyArray<{ readonly node: { readonly base: string, readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } }> } };
+
 type SiteTitleQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 type SiteTitleQueryQuery = { readonly site: { readonly siteMetadata: { readonly title: string | null } | null } | null, readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly year: number | null } | null } }> } };
+
+type VideoPageQueryVariables = Exact<{
+  slug: Scalars['String'];
+  image: Scalars['String'];
+}>;
+
+
+type VideoPageQuery = { readonly site: { readonly siteMetadata: { readonly siteURL: string | null } | null } | null, readonly videosYaml: { readonly fields: { readonly baseName: string | null, readonly dir: string | null, readonly label: string | null, readonly slug: string | null, readonly image: string | null } | null } | null, readonly poster: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null, readonly thumbnail: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null };
 
 type GetAllVideosQueryVariables = Exact<{ [key: string]: never; }>;
 

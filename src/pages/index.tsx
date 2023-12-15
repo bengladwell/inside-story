@@ -1,12 +1,11 @@
-import React from 'react'
-import { graphql } from 'gatsby'
-import PropTypes from 'prop-types'
+import React, { type FC } from 'react'
+import { type PageProps, graphql } from 'gatsby'
 
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
 import WithAuth from '../components/with_auth'
 
-const IndexPage = ({ data }) => {
+const IndexPage: FC = ({ data }: PageProps<Queries.IndexPageQuery>) => {
   const videos = data.allVideosYaml.edges.map(edge => ({
     id: edge.node.id,
     label: edge.node.fields.label,
@@ -25,7 +24,7 @@ const IndexPage = ({ data }) => {
 }
 
 export const query = graphql`
-  query {
+  query IndexPage {
     allVideosYaml {
       edges {
         node {
@@ -54,38 +53,5 @@ export const query = graphql`
     }
   }
 `
-
-IndexPage.propTypes = {
-  data: PropTypes.shape({
-    allVideosYaml: PropTypes.shape({
-      edges: PropTypes.arrayOf(PropTypes.shape({
-        node: PropTypes.shape({
-          id: PropTypes.string.isRequired,
-          fields: PropTypes.shape({
-            slug: PropTypes.string.isRequired,
-            label: PropTypes.string.isRequired,
-            year: PropTypes.number.isRequired
-          })
-        })
-      }))
-    }),
-    allFile: PropTypes.shape({
-      edges: PropTypes.arrayOf(PropTypes.shape({
-        node: PropTypes.shape({
-          base: PropTypes.string.isRequired,
-          childImageSharp: PropTypes.shape({
-            fluid: PropTypes.shape({
-              aspectRatio: PropTypes.number.isRequired,
-              base64: PropTypes.string.isRequired,
-              sizes: PropTypes.string.isRequired,
-              src: PropTypes.string.isRequired,
-              srcSet: PropTypes.string.isRequired
-            })
-          })
-        })
-      }))
-    })
-  })
-}
 
 export default IndexPage
