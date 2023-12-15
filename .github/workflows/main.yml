@@ -10,5 +10,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+      - run: NPM_CONFIG_LEGACY_PEER_DEPS=true npm install
       - run: npm run lint
