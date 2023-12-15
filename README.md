@@ -52,6 +52,10 @@ To start a new feature:
 * `npm run stack:status` to check status or https://console.aws.amazon.com/cloudformation/home
 * `npm run develop`
 
+Stack creation requires AWS CLI credentials. Easiest way:
+* `brew install awscli`
+* `aws configure`
+
 ### Segmentation faults
 
 Running `gatsby develop` sometimes results in a segmentation fault. If this happens, remove the `.cache` directory.
