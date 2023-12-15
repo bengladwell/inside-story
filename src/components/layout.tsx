@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import PropTypes from 'prop-types'
 import { FaSync } from 'react-icons/fa'
 import { useStaticQuery, graphql } from 'gatsby'
-import Helmet from 'react-helmet'
 
 import { userContext } from '../context'
 import User from '../models/user'
@@ -14,17 +13,6 @@ import './layout.scss'
 const Layout = ({ children }) => {
   const [user, setUser] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const { site: { siteMetadata: { title } } } = useStaticQuery(
-    graphql`
-      query {
-        site {
-          siteMetadata {
-            title
-          }
-        }
-      }
-    `
-  )
 
   useEffect(() => {
     try {
@@ -51,9 +39,6 @@ const Layout = ({ children }) => {
 
   return (
     <div className="site-layout">
-      <Helmet>
-        <title>{title}</title>
-      </Helmet>
       {
         isLoading
           ? <FaSync className="center-page fa-spin fa-6x" />
@@ -61,6 +46,21 @@ const Layout = ({ children }) => {
       }
     </div>
   )
+}
+
+export const Head = () => {
+  const { site: { siteMetadata: { title } } } = useStaticQuery(
+    graphql`
+      query {
+        site {
+          siteMetadata {
+            title
+          }
+        }
+      }
+    `
+  )
+  return <title>{title}</title>
 }
 
 Layout.propTypes = {

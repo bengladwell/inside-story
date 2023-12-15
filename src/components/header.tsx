@@ -61,7 +61,7 @@ const Header = () => {
                   <LoginWithFacebookButton />
                   <LoginWithGoogleButton />
                 </>
-              )
+                )
           }
         </userContext.Consumer>
         <Link

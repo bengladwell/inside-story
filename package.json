@@ -4,43 +4,6 @@
   "description": "Video hosting on AWS with gated auth",
   "version": "0.1.0",
   "author": "Ben Gladwell <bengladwell@gmail.com>",
-  "dependencies": {
-    "aws-sdk": "^2.1062.0",
-    "dotenv": "^8.6.0",
-    "gatsby": "^2.32.13",
-    "gatsby-image": "^2.11.0",
-    "gatsby-plugin-canonical-urls": "^2.10.0",
-    "gatsby-plugin-lodash": "^3.10.0",
-    "gatsby-plugin-manifest": "^2.12.1",
-    "gatsby-plugin-offline": "^3.10.2",
-    "gatsby-plugin-react-helmet": "^3.10.0",
-    "gatsby-plugin-s3": "^0.3.8",
-    "gatsby-plugin-sass": "^2.8.0",
-    "gatsby-plugin-sharp": "^2.14.4",
-    "gatsby-source-filesystem": "^2.11.1",
-    "gatsby-transformer-sharp": "^2.12.1",
-    "gatsby-transformer-yaml": "^2.11.0",
-    "js-cookie": "^2.2.1",
-    "lodash": "^4.17.21",
-    "modularscale-sass": "^3.0.10",
-    "node-sass": "^4.14.1",
-    "prop-types": "^15.8.1",
-    "react": "^16.14.0",
-    "react-dom": "^16.14.0",
-    "react-helmet": "^5.2.1",
-    "react-icons": "^4.3.1",
-    "video.js": "^7.17.0"
-  },
-  "devDependencies": {
-    "eslint": "^6.8.0",
-    "eslint-config-standard": "^14.1.1",
-    "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.3.1",
-    "eslint-plugin-react": "^7.28.0",
-    "eslint-plugin-standard": "^4.1.0",
-    "prettier": "^1.19.1"
-  },
   "keywords": [
     "gatsby"
   ],
@@ -58,13 +21,39 @@
     "stack:validate-template": "aws cloudformation validate-template --template-body file://lib/cloudformation.yml",
     "stack:create": "scripts/create_stack.js",
     "stack:status": "scripts/stack_status.sh",
-    "stack:delete": "scripts/destroy_stack.js"
+    "stack:delete": "scripts/destroy_stack.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint gatsby-config.ts gatsby-node.ts src/**/*.ts?"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/gatsbyjs/gatsby-starter-default"
+  "dependencies": {
+    "gatsby": "^5.12.4",
+    "gatsby-plugin-canonical-urls": "^5.12.0",
+    "gatsby-plugin-image": "^3.12.3",
+    "gatsby-plugin-s3": "^0.4.1",
+    "gatsby-plugin-sass": "^6.12.3",
+    "gatsby-plugin-sharp": "^5.12.3",
+    "gatsby-source-filesystem": "^5.12.1",
+    "gatsby-transformer-sharp": "^5.12.3",
+    "gatsby-transformer-yaml": "^5.12.0",
+    "js-cookie": "^3.0.5",
+    "modularscale-sass": "^3.0.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-icons": "^4.12.0",
+    "sass": "^1.69.5",
+    "sharp": "^0.33.0",
+    "video.js": "^8.6.1"
   },
-  "bugs": {
-    "url": "https://github.com/gatsbyjs/gatsby/issues"
+  "devDependencies": {
+    "@types/node": "^20.3.3",
+    "@types/react": "^18.2.14",
+    "@types/react-dom": "^18.2.6",
+    "@typescript-eslint/eslint-plugin": "^6.13.1",
+    "@typescript-eslint/parser": "^6.13.1",
+    "eslint": "^8.54.0",
+    "eslint-config-standard-with-typescript": "^40.0.0",
+    "eslint-plugin-n": "^16.3.1",
+    "eslint-plugin-promise": "^6.1.1",
+    "typescript": "^5.3.2"
   }
 }

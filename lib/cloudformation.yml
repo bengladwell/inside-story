@@ -390,7 +390,7 @@ Resources:
               ],
             }
           }
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
 
   SignerFunctionRole:
     Type: 'AWS::IAM::Role'
@@ -432,7 +432,7 @@ Resources:
         client_id: !Ref FacebookAppId
         client_secret: !Ref FacebookAppSecret
         authorize_scopes: public_profile, email
-        api_version: v6.0
+        api_version: v17.0
       AttributeMapping:
         username: id
         email: email
@@ -650,7 +650,7 @@ Resources:
               callback(e)
             }
           }
-      Runtime: nodejs12.x
+      Runtime: nodejs16.x
 
 Outputs:
   BucketName:

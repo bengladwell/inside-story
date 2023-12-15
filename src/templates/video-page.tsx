@@ -1,10 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { graphql } from 'gatsby'
-import Helmet from 'react-helmet'
 import Layout from '../components/layout'
 import VideoPlayer from '../components/video_player'
 import WithAuth from '../components/with_auth'
+import { getSrc } from 'gatsby-plugin-image'
 
 import 'video.js/dist/video-js.css'
 
@@ -21,17 +21,15 @@ const VideoPage = ({
         label
       }
     },
-    poster: {
-      childImageSharp: {
-        fluid: {
-          src: poster
-        }
-      }
-    },
+    poster,
     thumbnail: {
       childImageSharp: {
-        fixed: {
-          src: thumbnail
+        gatsbyImageData: {
+          images: {
+            fallback: {
+              src: thumbnail
+            }
+          }
         }
       }
     }
@@ -39,15 +37,11 @@ const VideoPage = ({
 }) => {
   return (
     <Layout>
-      <Helmet titleTemplate={`%s -- ${label}`}>
-        <meta name="og:image" content={`${siteURL}${thumbnail}`} />
-        <meta name="og:title" content={label} />
-      </Helmet>
       <WithAuth>
         <h1>{label}</h1>
         <VideoPlayer
           controls={true}
-          poster={poster}
+          poster={getSrc(poster.childImageSharp)}
           html5={{ vhs: { withCredentials: true } }}
         >
           <source
@@ -62,6 +56,28 @@ const VideoPage = ({
       </WithAuth>
     </Layout>
   )
+}
+
+export const Head = ({
+  data: {
+    site: {
+      siteMetadata: {
+        siteURL
+      }
+    },
+    videosYaml: {
+      fields: {
+        label
+      }
+    },
+    thumbnail
+  }
+}) => {
+  <>
+    <title>{`%s -- ${label}`}</title>
+    <meta name="og:image" content={`${siteURL}${getSrc(thumbnail)}`} />
+    <meta name="og:title" content={label} />
+  </>
 }
 
 export const query = graphql`
@@ -82,20 +98,12 @@ export const query = graphql`
     }
     poster: file(base: {eq: $image}) {
       childImageSharp {
-        fluid(maxWidth: 800) {
-          presentationHeight
-          presentationWidth
-          sizes
-          srcSet
-          src
-        }
+        gatsbyImageData(width: 800)
       }
     }
     thumbnail: file(base: {eq: $image}) {
       childImageSharp {
-        fixed(width: 400) {
-        ...GatsbyImageSharpFixed
-        }
+        gatsbyImageData(width:400)
       }
     }
   }

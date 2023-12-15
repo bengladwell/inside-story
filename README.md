@@ -51,3 +51,31 @@ To start a new feature:
 * `npm run stack:create`
 * `npm run stack:status` to check status or https://console.aws.amazon.com/cloudformation/home
 * `npm run develop`
+
+Stack creation requires AWS CLI credentials. Easiest way:
+* `brew install awscli`
+* `aws configure`
+
+### Segmentation faults
+
+Running `gatsby develop` sometimes results in a segmentation fault. If this happens, remove the `.cache` directory.
+
+### Dependency management
+
+#### npm peer dependencies
+
+Recent versions of npm try to install peer dependencies by default. This causes lots of warnings for some gatsby subdependencies. To avoid this, use `NPM_CONFIG_LEGACY_PEER_DEPS=true` when installing or updating packages.
+
+#### Sharp
+The `sharp` package required multiple workarounds in one environment (but not another).
+
+1. It may require python 2 for its build. If necessary, install and use python 2 using pyenv:
+
+* `pyenv install 2.17.18`
+* `pyenv local 2.17.18`
+* `npm install`
+
+2. For some reason, it could not find libarchive when building.
+
+* Find `libarchive.pc` with `brew list libarchive`
+* Add its directory to `PKG_CONFIG_PATH` when npm installing: `PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/Cellar/libarchive/3.7.2/lib/pkgconfig/" npm i
