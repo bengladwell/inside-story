@@ -1,8 +1,8 @@
-import React from 'react'
+import React, { type FC } from 'react'
 
 import './privacy_message.scss'
 
-const PrivacyMessage = () => {
+const PrivacyMessage: FC = () => {
   return (
     <div className="privacy-message">
       <p>Hi there. When you log in to this site, I retain your name and email address.</p>
