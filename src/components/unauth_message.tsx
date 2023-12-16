@@ -1,5 +1,4 @@
 import React, { type FC } from 'react'
-import PropTypes from 'prop-types'
 
 import type { User } from '../@types/models'
 
@@ -25,10 +24,6 @@ const UnauthMessage: FC = ({ user }: { user: User | null }) => {
         </p>
       </div>
       )
-}
-
-UnauthMessage.propTypes = {
-  user: PropTypes.object
 }
 
 export default UnauthMessage
