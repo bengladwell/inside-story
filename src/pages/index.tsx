@@ -4,15 +4,25 @@ import { type PageProps, graphql } from 'gatsby'
 import Layout from '../components/layout'
 import VideoList from '../components/video_list'
 import WithAuth from '../components/with_auth'
+import type { Video } from '../@types/models'
+
+type VideosYaml = Queries.VideosYaml & {
+  readonly fields: Queries.VideosYamlFields
+}
 
 const IndexPage: FC = ({ data }: PageProps<Queries.IndexPageQuery>) => {
-  const videos = data.allVideosYaml.edges.map(edge => ({
-    id: edge.node.id,
-    label: edge.node.fields.label,
-    slug: edge.node.fields.slug,
-    year: edge.node.fields.year,
-    image: data.allFile.edges.find(fileEdge => fileEdge.node.base === edge.node.fields.image)
-  }))
+  const videos: Video[] = data.allVideosYaml.edges
+    .filter(edge => edge.node)
+    .map(edge => {
+      const node = edge.node as VideosYaml
+      return {
+        id: edge.node.id,
+        label: node.fields.label,
+        slug: node.fields.slug,
+        year: node.fields.year,
+        image: data.allFile.edges.find(fileEdge => fileEdge.node.base === node.fields.image)
+      }
+    })
 
   return (
     <Layout>

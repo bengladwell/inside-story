@@ -2455,12 +2455,12 @@ type VideosYamlFieldSelector = {
 };
 
 type VideosYamlFields = {
-  readonly baseName: Maybe<Scalars['String']>;
-  readonly dir: Maybe<Scalars['String']>;
-  readonly image: Maybe<Scalars['String']>;
-  readonly label: Maybe<Scalars['String']>;
-  readonly slug: Maybe<Scalars['String']>;
-  readonly year: Maybe<Scalars['Int']>;
+  readonly baseName: Scalars['String'];
+  readonly dir: Scalars['String'];
+  readonly image: Scalars['String'];
+  readonly label: Scalars['String'];
+  readonly slug: Scalars['String'];
+  readonly year: Scalars['Int'];
 };
 
 type VideosYamlFieldsFieldSelector = {
@@ -2604,12 +2604,12 @@ type GoogleLogoQuery = { readonly file: { readonly childImageSharp: { readonly g
 type IndexPageQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type IndexPageQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly slug: string | null, readonly label: string | null, readonly year: number | null, readonly image: string | null } | null } }> }, readonly allFile: { readonly edges: ReadonlyArray<{ readonly node: { readonly base: string, readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } }> } };
+type IndexPageQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly slug: string, readonly label: string, readonly year: number, readonly image: string } | null } }> }, readonly allFile: { readonly edges: ReadonlyArray<{ readonly node: { readonly base: string, readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } }> } };
 
 type SiteTitleQueryQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type SiteTitleQueryQuery = { readonly site: { readonly siteMetadata: { readonly title: string | null } | null } | null, readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly year: number | null } | null } }> } };
+type SiteTitleQueryQuery = { readonly site: { readonly siteMetadata: { readonly title: string | null } | null } | null, readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly year: number } | null } }> } };
 
 type VideoPageQueryVariables = Exact<{
   slug: Scalars['String'];
@@ -2617,12 +2617,12 @@ type VideoPageQueryVariables = Exact<{
 }>;
 
 
-type VideoPageQuery = { readonly site: { readonly siteMetadata: { readonly siteURL: string | null } | null } | null, readonly videosYaml: { readonly fields: { readonly baseName: string | null, readonly dir: string | null, readonly label: string | null, readonly slug: string | null, readonly image: string | null } | null } | null, readonly poster: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null, readonly thumbnail: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null };
+type VideoPageQuery = { readonly site: { readonly siteMetadata: { readonly siteURL: string | null } | null } | null, readonly videosYaml: { readonly fields: { readonly baseName: string, readonly dir: string, readonly label: string, readonly slug: string, readonly image: string } | null } | null, readonly poster: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null, readonly thumbnail: { readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } | null };
 
 type GetAllVideosQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type GetAllVideosQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly fields: { readonly slug: string | null, readonly label: string | null, readonly year: number | null, readonly dir: string | null, readonly baseName: string | null, readonly image: string | null } | null } }> } };
+type GetAllVideosQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly fields: { readonly slug: string, readonly label: string, readonly year: number, readonly dir: string, readonly baseName: string, readonly image: string } | null } }> } };
 
 
 }
