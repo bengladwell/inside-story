@@ -2606,10 +2606,10 @@ type IndexPageQueryVariables = Exact<{ [key: string]: never; }>;
 
 type IndexPageQuery = { readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly slug: string, readonly label: string, readonly year: number, readonly image: string } | null } }> }, readonly allFile: { readonly edges: ReadonlyArray<{ readonly node: { readonly base: string, readonly childImageSharp: { readonly gatsbyImageData: import('gatsby-plugin-image').IGatsbyImageData } | null } }> } };
 
-type SiteTitleQueryQueryVariables = Exact<{ [key: string]: never; }>;
+type SiteTitleQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-type SiteTitleQueryQuery = { readonly site: { readonly siteMetadata: { readonly title: string | null } | null } | null, readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly year: number } | null } }> } };
+type SiteTitleQuery = { readonly site: { readonly siteMetadata: { readonly title: string | null } | null } | null, readonly allVideosYaml: { readonly edges: ReadonlyArray<{ readonly node: { readonly id: string, readonly fields: { readonly year: number } | null } }> } };
 
 type VideoPageQueryVariables = Exact<{
   slug: Scalars['String'];

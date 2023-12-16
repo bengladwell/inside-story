@@ -78,9 +78,9 @@ class Auth {
     })
   }
 
-  getUser () {
+  getUser (): Promise<User | null> {
     if (!this.idToken) {
-      return Promise.resolve()
+      return Promise.resolve(null)
     }
 
     return cognitoIdentityServiceProvider
@@ -93,6 +93,7 @@ class Auth {
         } else {
           throw err
         }
+        return null
       })
   }
 
