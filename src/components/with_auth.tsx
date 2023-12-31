@@ -1,18 +1,13 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React, { type ReactNode, type FC } from 'react'
 import { userContext } from '../context'
 import UnauthMessage from './unauth_message'
 
-const WithAuth = ({ children }) => {
+const WithAuth: FC = ({ children }: { children: ReactNode }) => {
   return (
     <userContext.Consumer>
-      { user => user && user.authorized ? children : <UnauthMessage user={user} /> }
+      { user => user !== null && user.authorized ? children : <UnauthMessage user={user} /> }
     </userContext.Consumer>
   )
-}
-
-WithAuth.propTypes = {
-  children: PropTypes.node.isRequired
 }
 
 export default WithAuth

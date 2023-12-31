@@ -49,11 +49,11 @@ class Auth {
     }
   }
 
-  static facebookLogin () {
+  static facebookLogin (): void {
     window.location = `https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Facebook`
   }
 
-  static googleLogin () {
+  static googleLogin (): void {
     window.location = `https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id=${process.env.USER_POOL_CLIENT_ID}&redirect_uri=${redirectUri}&identity_provider=Google`
   }
 
@@ -78,9 +78,9 @@ class Auth {
     })
   }
 
-  getUser () {
+  getUser (): Promise<User | null> {
     if (!this.idToken) {
-      return Promise.resolve()
+      return Promise.resolve(null)
     }
 
     return cognitoIdentityServiceProvider
@@ -93,6 +93,7 @@ class Auth {
         } else {
           throw err
         }
+        return null
       })
   }
 

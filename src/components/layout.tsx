@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react'
-import PropTypes from 'prop-types'
+import React, { useEffect, useState, type FC, type ReactElement } from 'react'
 import { FaSync } from 'react-icons/fa'
 import { useStaticQuery, graphql } from 'gatsby'
 
@@ -10,8 +9,8 @@ import Auth from '../services/auth'
 import Header from './header'
 import './layout.scss'
 
-const Layout = ({ children }) => {
-  const [user, setUser] = useState(null)
+const Layout: FC<{ children: ReactElement }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -29,9 +28,9 @@ const Layout = ({ children }) => {
         auth.getUser(),
         auth.authorizeUser()
       ]).then(([user]) => {
-        if (user) setUser(user)
+        if (user !== null) setUser(user)
         setIsLoading(false)
-      }).finally(() => {
+      }).catch(() => {
         setIsLoading(false)
       })
     }
@@ -48,7 +47,7 @@ const Layout = ({ children }) => {
   )
 }
 
-export const Head = () => {
+export const Head: FC = () => {
   const { site: { siteMetadata: { title } } } = useStaticQuery(
     graphql`
       query {
@@ -61,10 +60,6 @@ export const Head = () => {
     `
   )
   return <title>{title}</title>
-}
-
-Layout.propTypes = {
-  children: PropTypes.node.isRequired
 }
 
 export default Layout

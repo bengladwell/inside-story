@@ -1,4 +1,4 @@
-import PropTypes from 'prop-types'
+import { type User as UserModel } from '../@types/models'
 
 class User {
   static fromIdp (data) {
@@ -15,17 +15,9 @@ class User {
     }
   }
 
-  constructor ({ name = null, email = null, imageUrl = null, authorized = true }) {
+  constructor ({ name, email, imageUrl = null, authorized = true }: UserModel) {
     Object.assign(this, { name, email, imageUrl, authorized })
   }
 }
 
 export default User
-
-const userPropType = PropTypes.shape({
-  name: PropTypes.string.isRequired,
-  email: PropTypes.string.isRequired,
-  imageUrl: PropTypes.string.isRequired
-})
-
-export { userPropType }

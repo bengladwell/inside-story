@@ -1,7 +1,4 @@
 import { createContext } from 'react'
+import { type User } from './@types/models'
 
-const userContext = createContext({ user: {} })
-
-export {
-  userContext
-}
+export const userContext = createContext<User | null>(null)

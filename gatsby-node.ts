@@ -5,15 +5,8 @@
  */
 
 import path from 'path'
-import type { Node, GatsbyNode } from 'gatsby'
-
-interface VideoNode extends Node {
-  dir: string
-  base_name: string
-  label: string
-  year: string
-  image: string
-}
+import type { GatsbyNode } from 'gatsby'
+import type { VideoNode } from './src/@types/graphql'
 
 const toKebabCase = (str: string): string => {
   return str.replace(/\s+/g, '-').toLowerCase()
@@ -31,6 +24,19 @@ export const onCreateNode: GatsbyNode['onCreateNode'] = ({ node, actions }) => {
     createNodeField({ node, name: 'image', value: videoNode.image })
     createNodeField({ node, name: 'slug', value: toKebabCase(videoNode.label) })
   }
+}
+
+export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] = ({ actions: { createTypes } }) => {
+  createTypes(`
+    type VideosYamlFields {
+      slug: String!
+      label: String!
+      year: Int!
+      dir: String!
+      baseName: String!
+      image: String!
+    }
+  `)
 }
 
 export const createPages: GatsbyNode['createPages'] = async ({ graphql, actions }) => {

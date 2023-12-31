@@ -1,14 +1,14 @@
 import { Link, useStaticQuery, graphql } from 'gatsby'
-import React from 'react'
+import React, { type FC } from 'react'
 import './header.scss'
 import { userContext } from '../context'
 import User from './user'
 import LoginWithFacebookButton from './login_with_facebook_button'
 import LoginWithGoogleButton from './login_with_google_button'
 
-const Header = () => {
-  const data = useStaticQuery(graphql`
-    query SiteTitleQuery {
+const Header: FC = () => {
+  const data: Queries.SiteTitleQuery = useStaticQuery(graphql`
+    query SiteTitle {
       site {
         siteMetadata {
           title
@@ -29,9 +29,7 @@ const Header = () => {
 
   const videos = data.allVideosYaml.edges.map(edge => ({
     id: edge.node.id,
-    label: edge.node.fields.label,
-    slug: edge.node.fields.slug,
-    year: edge.node.fields.year
+    year: edge.node?.fields?.year
   }))
   const firstVideo = videos[0]
   const lastVideo = [...videos].pop()
@@ -54,7 +52,7 @@ const Header = () => {
         <p>{firstVideo.year} - {lastVideo.year}</p>
         <userContext.Consumer>
           {
-            user => user && user.authorized
+            user => user !== null && user.authorized
               ? <User user={user} />
               : (
                 <>

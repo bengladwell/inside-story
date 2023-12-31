@@ -1,10 +1,11 @@
-import React from 'react'
-import PropTypes from 'prop-types'
+import React, { type FC } from 'react'
+
+import type { User } from '../@types/models'
 
 import './unauth_message.scss'
 
-const UnauthMessage = ({ user }) => {
-  return user
+const UnauthMessage: FC = ({ user }: { user: User | null }) => {
+  return user !== null
     ? (
       <div className="unauth-message unknown-message">
         <p>Hi {user.name}!</p>
@@ -23,10 +24,6 @@ const UnauthMessage = ({ user }) => {
         </p>
       </div>
       )
-}
-
-UnauthMessage.propTypes = {
-  user: PropTypes.object
 }
 
 export default UnauthMessage

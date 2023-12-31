@@ -1,6 +1,5 @@
-import React from 'react'
-import PropTypes from 'prop-types'
-import { graphql } from 'gatsby'
+import React, { type FC } from 'react'
+import { graphql, type PageProps } from 'gatsby'
 import Layout from '../components/layout'
 import VideoPlayer from '../components/video_player'
 import WithAuth from '../components/with_auth'
@@ -8,7 +7,7 @@ import { getSrc } from 'gatsby-plugin-image'
 
 import 'video.js/dist/video-js.css'
 
-const VideoPage = ({
+const VideoPage: FC = ({
   data: {
     site: {
       siteMetadata: {
@@ -34,7 +33,7 @@ const VideoPage = ({
       }
     }
   }
-}) => {
+}: PageProps<Queries.VideoPageQuery>) => {
   return (
     <Layout>
       <WithAuth>
@@ -58,7 +57,7 @@ const VideoPage = ({
   )
 }
 
-export const Head = ({
+export const Head: FC = ({
   data: {
     site: {
       siteMetadata: {
@@ -72,7 +71,7 @@ export const Head = ({
     },
     thumbnail
   }
-}) => {
+}: PageProps<Queries.VideoPageQuery>) => {
   <>
     <title>{`%s -- ${label}`}</title>
     <meta name="og:image" content={`${siteURL}${getSrc(thumbnail)}`} />
@@ -81,7 +80,7 @@ export const Head = ({
 }
 
 export const query = graphql`
-  query($slug: String!, $image: String!) {
+  query VideoPage($slug: String!, $image: String!) {
     site {
       siteMetadata {
         siteURL
@@ -110,35 +109,3 @@ export const query = graphql`
 `
 
 export default VideoPage
-
-VideoPage.propTypes = {
-  data: PropTypes.shape({
-    site: PropTypes.shape({
-      siteMetadata: PropTypes.shape({
-        siteURL: PropTypes.string.isRequired
-      })
-    }),
-    videosYaml: PropTypes.shape({
-      fields: PropTypes.shape({
-        baseName: PropTypes.string.isRequired,
-        dir: PropTypes.string.isRequired,
-        label: PropTypes.string.isRequired,
-        slug: PropTypes.string.isRequired
-      })
-    }),
-    poster: PropTypes.shape({
-      childImageSharp: PropTypes.shape({
-        fluid: PropTypes.shape({
-          src: PropTypes.string.isRequired
-        })
-      })
-    }),
-    thumbnail: PropTypes.shape({
-      childImageSharp: PropTypes.shape({
-        fixed: PropTypes.shape({
-          src: PropTypes.string.isRequired
-        })
-      })
-    })
-  })
-}
