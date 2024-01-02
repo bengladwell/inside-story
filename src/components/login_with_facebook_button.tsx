@@ -6,7 +6,7 @@ import { GatsbyImage, getImage } from 'gatsby-plugin-image'
 import './login_with_facebook_button.scss'
 
 const LoginWithFacebookButton: FC = () => {
-  const data = useStaticQuery(graphql`
+  const data = useStaticQuery<Queries.FacebookLogoQuery>(graphql`
     query FacebookLogo {
       file(relativePath: {eq: "f_logo_RGB-Blue_58.png"}) {
         childImageSharp {
