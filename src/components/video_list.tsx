@@ -7,13 +7,14 @@ import './video_list.scss'
 
 // TODO: video needs washed out a bit; title over top
 const VideoList: FC = ({ videos }: { videos: Video[] }) => {
+  // TODO: resolve childImageSharp type issue
   return (
   <ul className='video-list'>
     {videos.map(({ id, slug, label, image }) => {
       return (
         <li className="video" key={id}>
           <Link to={`/${slug}`}>
-            { <GatsbyImage image={getImage(image.node.childImageSharp)} /> }
+            { <GatsbyImage image={getImage(image.node.childImageSharp)} /> /* eslint-disable-line */ }
             <div className="video__name">{label}</div>
           </Link>
         </li>

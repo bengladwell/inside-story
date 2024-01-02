@@ -6,7 +6,7 @@ import { GatsbyImage, getImage } from 'gatsby-plugin-image'
 import './login_with_google_button.scss'
 
 const LoginWithGoogleButton: FC = () => {
-  const data = useStaticQuery(graphql`
+  const data = useStaticQuery<Queries.GoogleLogoQuery>(graphql`
     query GoogleLogo {
       file(relativePath: {eq: "google-g.png"}) {
         childImageSharp {

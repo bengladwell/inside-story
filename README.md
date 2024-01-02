@@ -78,4 +78,11 @@ The `sharp` package required multiple workarounds in one environment (but not an
 2. For some reason, it could not find libarchive when building.
 
 * Find `libarchive.pc` with `brew list libarchive`
-* Add its directory to `PKG_CONFIG_PATH` when npm installing: `PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/Cellar/libarchive/3.7.2/lib/pkgconfig/" npm i
+* Add its directory to `PKG_CONFIG_PATH` when npm installing: `PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/opt/homebrew/Cellar/libarchive/3.7.2/lib/pkgconfig/" npm i`
+
+#### Updating packages
+
+* `NPM_CONFIG_LEGACY_PEER_DEPS=true npm outdated` - to list out of date pacakges
+* `NPM_CONFIG_LEGACY_PEER_DEPS=true npm update` - to update to allowed semantic versions as defined by package.json
+* For any packages not allowed to get to latest version, specifically install that version with npm.
+  * Example, for eslint-config-standard-with-typescript at `40.0.0`, but latest is `43.0.0`, do `NPM_CONFIG_LEGACY_PEER_DEPS=true npm eslint-config-standard-with-typescript@43.0.0`
