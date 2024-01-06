@@ -2,7 +2,7 @@
 
 BRANCH=$(git branch --show-current)
 
-if [ $BRANCH == "master" ]; then
+if [ $BRANCH == "main" ]; then
   STACK_NAME=inside-story
 else
   STACK_NAME=$BRANCH

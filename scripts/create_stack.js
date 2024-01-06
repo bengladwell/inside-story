@@ -15,7 +15,7 @@ async function stackName () {
 
   const branchName = stdout.substring(0, stdout.length - 1)
 
-  return branchName === 'master' ? 'inside-story' : branchName
+  return branchName === 'main' ? 'inside-story' : branchName
 }
 
 async function genPrivateKey () {
