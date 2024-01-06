@@ -6,7 +6,7 @@ Inside Story uses [Gatsby](https://www.gatsbyjs.com/) to display the video pages
 
 This project started out as an attempt to replace a simpler video hosting setup with something "serverless". It ended up being a big experiment with AWS and an opportunity to learn. (Read: this is way more complicated than the volume of my video site requires :) ) I wanted to have some public facing content - the login page, headers on the individual video pages so that previews would appear in social media postings - but also restrict access to videos of my kids. I wanted the restrictions to be real - ie not just hiding stuff with javascript. Finally, I wanted the setup to be self documenting so that there are no obscure settings deep in the AWS console to forget about.
 
-The [CloudFormation template](https://github.com/bengladwell/inside-story/blob/master/lib/cloudformation.yml) has all the details in its 30-odd resources, but keep reading for an overview.
+The [CloudFormation template](https://github.com/bengladwell/inside-story/blob/main/lib/cloudformation.yml) has all the details in its 30-odd resources, but keep reading for an overview.
 
 ## User Auth
 
