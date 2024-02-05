@@ -1,3 +1,8 @@
+- dir: 2024-Hudson-Year-16
+  base_name: 2024_Hudson_Year_16
+  label: Hudson Year 16
+  year: 2024
+  image: 2024_Hudson_Year_16.jpg
 - dir: 2023-Mesfin-Year-14
   base_name: 2023_Mesfin_Year_14
   label: Mesfin Year 14
