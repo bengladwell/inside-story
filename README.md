@@ -50,7 +50,10 @@ To start a new feature:
 * make changes to cloudformation.yml
 * `npm run stack:create`
 * `npm run stack:status` to check status or https://console.aws.amazon.com/cloudformation/home
-* `npm run develop`
+* `npx gatsby clean`
+* `npm run build_and_deploy`
+* Add user pool redirect URL to identity providers
+* Use `scripts/update_stack.js` to apply changes to the stack as needed
 
 Stack creation requires AWS CLI credentials. Easiest way:
 * `brew install awscli`
@@ -85,4 +88,4 @@ The `sharp` package required multiple workarounds in one environment (but not an
 * `NPM_CONFIG_LEGACY_PEER_DEPS=true npm outdated` - to list out of date pacakges
 * `NPM_CONFIG_LEGACY_PEER_DEPS=true npm update` - to update to allowed semantic versions as defined by package.json
 * For any packages not allowed to get to latest version, specifically install that version with npm.
-  * Example, for eslint-config-standard-with-typescript at `40.0.0`, but latest is `43.0.0`, do `NPM_CONFIG_LEGACY_PEER_DEPS=true npm eslint-config-standard-with-typescript@43.0.0`
+  * Example, for eslint-config-standard-with-typescript at `40.0.0`, but latest is `43.0.0`, do `NPM_CONFIG_LEGACY_PEER_DEPS=true npm install eslint-config-standard-with-typescript@43.0.0`

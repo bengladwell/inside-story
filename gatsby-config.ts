@@ -18,14 +18,6 @@ const config: GatsbyConfig = {
   graphqlTypegen: true,
   plugins: [
     {
-      resolve: 'gatsby-plugin-s3',
-      options: {
-        bucketName: process.env.SITE_BUCKET ?? 'inside-story',
-        protocol: 'https',
-        hostname: process.env.SITE_DOMAIN
-      }
-    },
-    {
       resolve: 'gatsby-plugin-canonical-urls',
       options: {
         siteUrl: `https://${process.env.SITE_DOMAIN}`

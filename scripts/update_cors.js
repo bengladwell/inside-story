@@ -1,17 +1,9 @@
 #!/usr/bin/env node
 
 require('dotenv').config({ path: '.env.production' })
-const S3 = require('aws-sdk/clients/s3')
+const { S3 } = require('@aws-sdk/client-s3');
 const s3 = new S3({ region: process.env.AWS_REGION })
 const Bucket = process.env.VIDEO_ASSET_BUCKET
-
-async function getCorsRules () {
-  return s3.getBucketCors({ Bucket }).promise()
-}
-
-async function putCorsRules (rules) {
-  return s3.putBucketCors({ Bucket, CORSConfiguration: rules }).promise()
-}
 
 function hasRule (rules) {
   return rules.CORSRules.find((rule) =>
@@ -19,7 +11,7 @@ function hasRule (rules) {
 }
 
 (async () => {
-  const corsRules = await getCorsRules()
+  const corsRules = await s3.getBucketCors({ Bucket })
   if (hasRule(corsRules)) {
     console.log('CORS rule exists; skipping')
   } else {
@@ -32,6 +24,6 @@ function hasRule (rules) {
         ExposeHeaders: []
       })
     }
-    await putCorsRules(newRules)
+    await s3.putBucketCors({ Bucket, CORSConfiguration: newRules })
   }
 })()
