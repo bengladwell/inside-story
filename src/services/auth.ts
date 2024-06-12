@@ -1,9 +1,11 @@
-import CognitoIdentityServiceProvider from 'aws-sdk/clients/cognitoidentityserviceprovider'
+import { CognitoIdentityProvider } from '@aws-sdk/client-cognito-identity-provider';
 import Cookies from 'js-cookie'
 import User from '../models/user'
 import UnauthorizedUserError from '../errors/unauthorized_user_error'
 
-const cognitoIdentityServiceProvider = new CognitoIdentityServiceProvider({ region: 'us-east-1' })
+const cognitoIdentityServiceProvider = new CognitoIdentityProvider({
+  region: 'us-east-1'
+})
 const redirectUri = process.env.NODE_ENV === 'development'
   ? encodeURIComponent('http://localhost:8000/')
   : encodeURIComponent(`https://${process.env.SITE_DOMAIN}/`)
@@ -23,7 +25,7 @@ class Auth {
   }
 
   static hasError (hashString) {
-    return hashString.match(/error(_description)?=/)
+    return hashString.match(/error(_description)?=/);
   }
 
   static saveIdentityCookies (hashString) {
@@ -85,7 +87,6 @@ class Auth {
 
     return cognitoIdentityServiceProvider
       .getUser({ AccessToken: this.accessToken })
-      .promise()
       .then(data => User.fromIdp(data))
       .catch(err => {
         if (err.message.match(/Token has expired/)) {
@@ -94,7 +95,7 @@ class Auth {
           throw err
         }
         return null
-      })
+      });
   }
 
   clear () {

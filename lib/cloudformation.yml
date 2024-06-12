@@ -123,6 +123,23 @@ Resources:
       BucketName: !Ref AWS::StackName
       WebsiteConfiguration:
         IndexDocument: index.html
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: false
+        IgnorePublicAcls: false
+        BlockPublicPolicy: false
+        RestrictPublicBuckets: false
+
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: 's3:GetObject'
+            Resource: !Sub ["arn:aws:s3:::${StackName}/*", { StackName: !Ref AWS::StackName }]
 
   VideoDistribution:
     Type: AWS::CloudFront::Distribution
@@ -359,13 +376,13 @@ Resources:
           VIDEOS_URL: !Ref VideoAssetDomain
       Code:
         ZipFile: |
-          const AWS = require('aws-sdk')
-
           exports.handler = async (event) => {
             const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
-            const signer = new AWS.CloudFront.Signer(process.env.CLOUDFRONT_KEY_PAIR_ID, privateKey)
+            const { getSignedCookies } = require("@aws-sdk/cloudfront-signer");
             const now = new Date()
-            const cookie = signer.getSignedCookie({
+            const cookies = getSignedCookies({
+              privateKey,
+              keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
               policy: JSON.stringify({
                 Statement: [{
                   Resource: `https://${process.env.VIDEOS_URL}/*`,
@@ -383,14 +400,15 @@ Resources:
               headers: {
                 "Content-Type": "application/json"
               },
-              cookies: [
-                `CloudFront-Policy=${cookie['CloudFront-Policy']}; Domain=${process.env.COOKIE_DOMAIN}`,
-                `CloudFront-Key-Pair-Id=${cookie['CloudFront-Key-Pair-Id']}; Domain=${process.env.COOKIE_DOMAIN}`,
-                `CloudFront-Signature=${cookie['CloudFront-Signature']}; Domain=${process.env.COOKIE_DOMAIN}`,
-              ],
+              cookies: Object.entries(cookies).reduce((acc, [key, value]) => (
+                [
+                  ...acc,
+                  `${key}=${value}; Domain=${process.env.COOKIE_DOMAIN}`,
+                ]
+              ), [])
             }
           }
-      Runtime: nodejs16.x
+      Runtime: nodejs20.x
 
   SignerFunctionRole:
     Type: 'AWS::IAM::Role'
@@ -583,26 +601,29 @@ Resources:
           ACCESS_SOURCE_EMAIL: !Ref AccessSourceEmail
       Code:
         ZipFile: |
-          const AWS = require('aws-sdk')
-          const dynamodb = new AWS.DynamoDB()
-          const ses = new AWS.SES()
+          const { DynamoDBClient } = require("@aws-sdk/client-dynamodb")
+          const { DynamoDBDocumentClient, GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb")
+          const { SendEmailCommand } = require("@aws-sdk/client-ses")
+          const { SESClient } = require("@aws-sdk/client-ses")
+          const sesClient = new SESClient()
+
+          const client = new DynamoDBClient({})
+          const docClient = DynamoDBDocumentClient.from(client)
 
           exports.handler = async (event, context, callback) => {
-            const getItemParams = {
+            const getCommand = new GetCommand({
               Key: {
-                email: {
-                  S: event.request.userAttributes.email
-                }
+                email: event.request.userAttributes.email
               },
               TableName: process.env.USER_TABLE
-            }
+            })
 
             try {
-              const data = await dynamodb.getItem(getItemParams).promise()
+              const data = await docClient.send(getCommand)
               const { email, name } = event.request.userAttributes
 
-              if (!Object.keys(data).length) {
-                const notification = {
+              if (!data.Item) {
+                const sendEmailCommand = new SendEmailCommand({
                   Destination: {
                     ToAddresses: [process.env.ACCESS_ADMIN_EMAIL]
                   },
@@ -614,33 +635,25 @@ Resources:
                     Subject: { Data: `Access request: ${name} <${email}>` }
                   },
                   Source: process.env.ACCESS_SOURCE_EMAIL
-                }
+                })
 
-                await dynamodb.putItem({
+                await docClient.send(new PutCommand({
                   TableName: process.env.USER_TABLE,
                   Item: {
-                    email: {
-                      S: email
-                    },
-                    name: {
-                      S: name
-                    },
-                    is_approved: {
-                      BOOL: false
-                    },
-                    created_at: {
-                      S: (new Date()).toISOString()
-                    }
+                    email: email,
+                    name: name,
+                    is_approved: false,
+                    created_at: (new Date()).toISOString()
                   }
-                }).promise()
+                }))
 
-                await ses.sendEmail(notification).promise()
+                await sesClient.send(sendEmailCommand)
 
                 callback(new Error(`Unknown user; email=${email}; name=${name}`), event)
                 return
               }
 
-              if (!(data.Item.is_approved && data.Item.is_approved.BOOL)) {
+              if (!(data.Item && data.Item.is_approved)) {
                 callback(new Error(`Unapproved user; email=${email}; name=${name}`), event)
                 return
               }
@@ -650,7 +663,7 @@ Resources:
               callback(e)
             }
           }
-      Runtime: nodejs16.x
+      Runtime: nodejs20.x
 
 Outputs:
   BucketName:

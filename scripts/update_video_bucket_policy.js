@@ -2,28 +2,10 @@
 
 require('dotenv').config({ path: '.env.production' })
 const _ = require('lodash')
-const { promisify } = require('util')
-const exec = promisify(require('child_process').exec)
-const S3 = require('aws-sdk/clients/s3')
+const { S3 } = require('@aws-sdk/client-s3')
 const s3 = new S3({ region: process.env.AWS_REGION })
 const Bucket = process.env.VIDEO_ASSET_BUCKET
-
-async function stackName () {
-  const { stdout, stderr } = await exec('git branch --show-current')
-  if (stderr) throw new Error(stderr)
-
-  const branchName = stdout.substring(0, stdout.length - 1)
-
-  return branchName === 'main' ? 'inside-story' : branchName
-}
-
-async function getBucketPolicy () {
-  return s3.getBucketPolicy({ Bucket }).promise()
-}
-
-async function putBucketPolicy (policy) {
-  return s3.putBucketPolicy({ Bucket, Policy: JSON.stringify(policy) }).promise()
-}
+const { stackName } = require('./utils');
 
 (async () => {
   const stack = await stackName()
@@ -39,7 +21,7 @@ async function putBucketPolicy (policy) {
 
   let newPolicy
   try {
-    const bucketPolicyString = await getBucketPolicy()
+    const bucketPolicyString = await s3.getBucketPolicy({ Bucket })
     const bucketPolicy = JSON.parse(bucketPolicyString.Policy)
 
     if (bucketPolicy.Statement.find(s => _.isEqual(s, statement))) {
@@ -67,5 +49,5 @@ async function putBucketPolicy (policy) {
   }
 
   console.log(`Adding policy statement for CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`)
-  await putBucketPolicy(newPolicy)
+  await s3.putBucketPolicy({ Bucket, Policy: JSON.stringify(newPolicy) })
 })()
