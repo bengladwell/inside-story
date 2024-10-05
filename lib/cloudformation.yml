@@ -25,12 +25,6 @@ Parameters:
   SignedCookieDomain:
     Type: String
     Description: Domain used for the signed cookie that gives access to video assets
-  FacebookAppId:
-    Type: String
-    Description: Facebook client_id for authorizing Facebook app
-  FacebookAppSecret:
-    Type: String
-    Description: Facebook client_secret for authorizing Facebook app
   GoogleClientId:
     Type: String
     Description: Google client_id for authorizing Google sign in
@@ -73,18 +67,6 @@ Rules:
         - !Equals
           - !Ref HostedZoneId
           - ""
-  facebookParamsRequired:
-    Assertions:
-      - Assert: !Not
-        - !Equals
-          - !Ref FacebookAppId
-          - ""
-        AssertDescription: FacebookAppId is required
-      - Assert: !Not
-        - !Equals
-          - !Ref FacebookAppSecret
-          - ""
-        AssertDescription: FacebookAppSecret is required
   googleParamsRequired:
     Assertions:
       - Assert: !Not
@@ -414,7 +396,7 @@ Resources:
     Type: 'AWS::IAM::Role'
     Properties:
       RoleName: !Sub ["${StackName}_Signer", { StackName: !Ref AWS::StackName }]
-      Description: Allows Signer lambda function to...
+      Description: Allows Signer lambda function to write Cloudwatch logs
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -434,28 +416,47 @@ Resources:
       UserPoolName: !Ref AWS::StackName
       LambdaConfig:
         PreAuthentication: !GetAtt UserAuthorizerFunction.Arn
-        PreSignUp: !GetAtt UserAuthorizerFunction.Arn
+        # Specify by explict ARN rather than `DefaultNotApprovedFunction.Arn` to avoid circular dependency
+        PostConfirmation: !Sub ["arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${StackName}_DefaultNotApproved", { StackName: !Ref AWS::StackName }]
+        # PreTokenGeneration:
+      AutoVerifiedAttributes:
+        - email
       UsernameAttributes:
         - email
       UsernameConfiguration:
         CaseSensitive: false
+      MfaConfiguration: "OFF"
+      Policies:
+        PasswordPolicy:
+          RequireLowercase: true
+          RequireSymbols: false
+          RequireNumbers: true
+          MinimumLength: 8
+          RequireUppercase: true
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      # TODO: make sure the Google conection maps these attributes
+      # TODO: make sure make client able to write these?
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: is_approved
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: is_admin
+          AttributeDataType: String
+          Mutable: true
+          Required: false
 
-  FacebookIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Properties:
-      UserPoolId: !Ref UserPool
-      ProviderType: Facebook
-      ProviderName: Facebook
-      ProviderDetails:
-        client_id: !Ref FacebookAppId
-        client_secret: !Ref FacebookAppSecret
-        authorize_scopes: public_profile, email
-        api_version: v17.0
-      AttributeMapping:
-        username: id
-        email: email
-        name: name
-        picture: picture
 
   GoogleIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
@@ -483,7 +484,6 @@ Resources:
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     DependsOn:
-      - FacebookIdentityProvider
       - GoogleIdentityProvider
       - UserPoolDomain
     Properties:
@@ -518,7 +518,7 @@ Resources:
         - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
-        - Facebook
+        - COGNITO
         - Google
 
   UsersTable:
@@ -586,6 +586,151 @@ Resources:
       Action: lambda:InvokeFunction
       Principal: cognito-idp.amazonaws.com
       SourceArn: !GetAtt UserPool.Arn
+
+  # the problem: When using a 3rd party identity provider, sign ups and logins are essentially the
+  # same. So it's not a problem that the PreSignup lambda action errors out without creating a user
+  # in the user pool.
+  # Possible solution:
+  # * signup always creates a user with `is_approved: false`.
+  # * add is_approved as a claim on the id token or access token and use that for authN throughout
+  # * OR - if a signup process calls both Pre sign-up AND Pre authentication, just make Pre authentication
+      # fail for is_approved: false. Test this first.
+  # Latter is potentially easier.
+      # Former allows for a better UX because the hosted cognito client UI would not error out
+  #
+      #
+      # TODO: in the process of doing the first option. Changed the PreSignUp hook to create a user with `custom:is_approved: false`. I successfully created a user, but the custom attribute was not set. And there was a redirect problem.
+      # After I get that working, add the custom claim with a different lambda function. Then get the frontend to use that claim for authN.
+
+  AddClaimFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt AddClaimFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+  AddClaimFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ["${StackName}_AddClaim", { StackName: !Ref AWS::StackName }]
+      Description: Allows AddClaim lambda function to write CloudWatch logs
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+
+  AddClaimFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ["${StackName}_AddClaim", { StackName: !Ref AWS::StackName }]
+      Description: Adds an is_approved claim to the ID token
+      Handler: index.handler
+      Role: !GetAtt AddClaimFunctionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            event.response = {
+              claimsOverrideDetails: {
+                claimsToAddOrOverride: {
+                  is_approved: event.request.userAttributes['custom:is_approved'] == 'true' ? true : false
+                }
+              }
+            }
+          }
+      Runtime: nodejs20.x
+
+  DefaultNotApprovedFunctionPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      Description: Provides access to the Cognito User Pool
+      ManagedPolicyName: !Sub ["${StackName}-DefaultNotApprovedFunctionPolicy", { StackName: !Ref AWS::StackName }]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - cognito-idp:AdminUpdateUserAttributes
+            Resource:
+              - !GetAtt UserPool.Arn
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource:
+              - '*'
+
+  DefaultNotApprovedFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ["${StackName}_DefaultNotApproved", { StackName: !Ref AWS::StackName }]
+      Description: Allows DefaultNotApproved lambda function to write CloudWatch logs
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - !Ref DefaultNotApprovedFunctionPolicy
+
+  DefaultNotApprovedFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt DefaultNotApprovedFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+  DefaultNotApprovedFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ["${StackName}_DefaultNotApproved", { StackName: !Ref AWS::StackName }]
+      Description: Forces Inside Story users to start as unapproved
+      Handler: index.handler
+      Role: !GetAtt DefaultNotApprovedFunctionRole.Arn
+      Code:
+        ZipFile: |
+          const { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } = require('@aws-sdk/client-cognito-identity-provider')
+
+          const cognitoClient = new CognitoIdentityProviderClient({});
+
+          exports.handler = async (event) => {
+            const userPoolId = event.userPoolId
+            const username = event.userName
+
+            const params = {
+              UserAttributes: [{
+                Name: 'custom:is_approved',
+                Value: 'false'
+              }],
+              UserPoolId: userPoolId,
+              Username: username,
+            }
+
+            try {
+              const command = new AdminUpdateUserAttributesCommand(params)
+              await cognitoClient.send(command)
+            } catch (error) {
+              console.error('Error updating custom attribute:', error);
+            }
+
+            return event
+          }
+      Runtime: nodejs20.x
 
   UserAuthorizerFunction:
     Type: AWS::Lambda::Function
@@ -669,6 +814,9 @@ Outputs:
   BucketName:
     Description: Site bucket name
     Value: !Ref SiteBucket
+  UserPoolId:
+    Description: Cognito User Pool id
+    Value: !Ref UserPool
   UserPoolClientId:
     Description: Cognito User Pool Client id
     Value: !Ref UserPoolClient

@@ -49,5 +49,6 @@ const { stackName } = require('./utils');
   }
 
   console.log(`Adding policy statement for CloudFront Origin Access Identity ${process.env.VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY}`)
+  console.log(JSON.stringify({ Bucket, Policy: newPolicy }, null, "\t"))
   await s3.putBucketPolicy({ Bucket, Policy: JSON.stringify(newPolicy) })
 })()

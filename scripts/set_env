@@ -18,6 +18,8 @@ for ENV in development production; do
   cp -f -v .env .env.$ENV
   SITE_BUCKET=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "BucketName").OutputValue'`
   echo "SITE_BUCKET=$SITE_BUCKET" >> .env.$ENV
+  USER_POOL_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolId").OutputValue'`
+  echo "USER_POOL_ID=$USER_POOL_ID" >> .env.$ENV
   USER_POOL_NAME=$STACK_NAME
   echo "USER_POOL_NAME=$USER_POOL_NAME" >> .env.$ENV
   SITE_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SiteDomain").OutputValue'`

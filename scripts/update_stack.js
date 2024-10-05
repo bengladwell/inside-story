@@ -17,10 +17,12 @@ async function updateStack () {
   try {
     const cfTemplate = await readFile('lib/cloudformation.yml', 'utf8')
     const StackName = await stackName()
-    const secretsFilePath = path.resolve(process.cwd(), `./.secrets.${StackName}`)
-    dotenv.config({ path: secretsFilePath })
-    const privateKey = decodeURI(process.env.SIGNER_ENCODED_PRIVATE_KEY)
-    const uriEncodedPrivateKey = process.env.SIGNER_ENCODED_PRIVATE_KEY
+    // const secretsFilePath = path.resolve(process.cwd(), `./.secrets.${StackName}`)
+    // dotenv.config({ path: secretsFilePath })
+    // const privateKey = decodeURI(process.env.SIGNER_ENCODED_PRIVATE_KEY)
+    // const uriEncodedPrivateKey = process.env.SIGNER_ENCODED_PRIVATE_KEY
+    const uriEncodedPrivateKey = await readFile(`.secrets.${StackName}`, 'utf8')
+    const privateKey = decodeURI(uriEncodedPrivateKey)
     const publicKey = await genPublicKey(privateKey)
     const Parameters = await getParams(uriEncodedPrivateKey, publicKey)
 
