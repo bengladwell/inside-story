@@ -22,12 +22,6 @@ async function genPublicKey (privateKey) {
 async function getParams (uriEncodedPrivateKey, publicKey) {
   const StackName = await stackName()
   return [{
-    ParameterKey: 'FacebookAppId',
-    ParameterValue: process.env.FACEBOOK_APP_ID
-  }, {
-    ParameterKey: 'FacebookAppSecret',
-    ParameterValue: process.env.FACEBOOK_APP_SECRET
-  }, {
     ParameterKey: 'GoogleClientId',
     ParameterValue: process.env.GOOGLE_CLIENT_ID
   }, {
