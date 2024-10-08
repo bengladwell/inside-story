@@ -45,6 +45,15 @@ Allows for every user to be specifically granted access by the administrator. Th
 
 ## Development notes
 
+### System requirements
+
+* brew install caddy imagemagick
+
+### Run the site locally
+* bin/jekyll serve
+* add `127.0.0.1  local.bengladwell.com` to /etc/hosts
+* caddy --to localhost:4000 --from local.bengladwell.com --internal-certs
+
 To start a new feature:
 * create a new branch (no underscores)
 * make changes to cloudformation.yml
