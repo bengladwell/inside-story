@@ -1,0 +1,14 @@
+---
+layout: default
+---
+<ul class='video-list'>
+  {% assign videos = site.videos | sort: "date" | reverse %}
+  {% for video in videos %}
+    <li class='video'>
+      <a href="{{ video.url }}">
+        <img src="/assets/images/processed/{{ video.image | replace: ".jpg", "_300x300.jpg" }}" alt="{{ video.label }}" />
+        <div class="video__name">{{video.label}}</div>
+      </a>
+    </li>
+  {% endfor %}
+</ul>
