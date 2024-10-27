@@ -16,16 +16,25 @@
     font-weight: 700;
   }
 
-  &__login {
-    background: none!important;
-    border: none;
-    padding: 0!important;
-    color: #069;
-    text-decoration: underline;
+  .login-with-google-button {
+    background: none;
+    display: flex;
+    align-items: center;
+    color: $black;
+    border: 1px solid $black;
+    border-radius: 5px;
+    padding: 0.25em 1em 0.25em 0.25em;
+    font-size: 1rem;
     cursor: pointer;
-  }
-  .privacy {
-    display: block;
-    margin-top: 0.5em;
+    min-width: 75%;
+
+    & > div {
+      margin: 0 0.75em 0 0;
+    }
+
+    img {
+      width: 25px;
+      margin: 0 0.75em 0 0;
+    }
   }
 }

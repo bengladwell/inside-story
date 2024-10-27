@@ -10,25 +10,13 @@
   <p>{{ first_year }} - {{ last_year }}</p>
   <div class="user">
   </div>
-  <!-- <userContext.Consumer> -->
-  <!--   { -->
-  <!--     user => user !== null && user.authorized -->
-  <!--       ? <User user={user} /> -->
-  <!--       : ( -->
-  <!--         <> -->
-  <!--           <LoginWithFacebookButton /> -->
-  <!--           <LoginWithGoogleButton /> -->
-  <!--         </> -->
-  <!--         ) -->
-  <!--   } -->
-  <!-- </userContext.Consumer> -->
-  <!-- <Link -->
-  <!--   className="privacy" -->
-  <!--   to='/privacy/' -->
-  <!--   style={{ -->
-  <!--     textDecoration: 'none' -->
-  <!--   }} -->
-  <!-- > -->
-  <!--   Privacy Policy -->
-  <!-- </Link> -->
+  <div class="login">
+    <button
+      class="login-with-google-button"
+      onclick="window.location.href = 'https://{{ site.user_pool_name }}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id={{ site.user_pool_client_id }}&redirect_uri={{ site.encoded_redirect_uri }}&identity_provider=Google';"
+    >
+      <img src="{% link /assets/images/google-g_100.png %}" alt="Google" />
+      Login with Google
+    </button>
+  </div>
 </header>
