@@ -1,0 +1,36 @@
+#!/bin/bash
+
+BRANCH=$(git branch --show-current)
+
+if [ $BRANCH == "main" ]; then
+  STACK_NAME=inside-story
+else
+  STACK_NAME=$BRANCH
+fi
+
+echo "Retrieving stack description..."
+STACK_OUTPUT=`aws cloudformation describe-stacks --stack-name $STACK_NAME | jq ".Stacks[0].Outputs"`
+echo "Done"
+
+
+set -o allexport
+source .env
+
+SITE_BUCKET=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "BucketName").OutputValue'`
+SITE_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SiteDomain").OutputValue'`
+VIDEO_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoDomain").OutputValue'`
+SIGNER_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SignerDomain").OutputValue'`
+USER_POOL_NAME=$STACK_NAME
+USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
+VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoAssetOriginAccessIdentity").OutputValue'`
+
+set +o allexport
+
+if [[ "$1" == "--" ]]; then
+  shift # Remove the `--` argument from the list
+  # Run the remaining arguments as a command with the exported variables
+  "$@"
+else
+  echo "Usage: $0 -- <command> [args...]"
+  exit 1
+fi

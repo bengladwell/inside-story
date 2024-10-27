@@ -9,5 +9,7 @@ vendor
 !/.env.template
 /.secrets.*
 
+/node_modules
+
 # Mac files
 .DS_Store
