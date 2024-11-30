@@ -19,10 +19,11 @@ async function updateStack () {
     const StackName = await stackName()
     const secretsFilePath = path.resolve(process.cwd(), `./.secrets.${StackName}`)
     dotenv.config({ path: secretsFilePath })
-    const privateKey = decodeURI(process.env.SIGNER_ENCODED_PRIVATE_KEY)
-    const uriEncodedPrivateKey = process.env.SIGNER_ENCODED_PRIVATE_KEY
+    const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
+    const uriEncodedPrivateKey = process.env.URI_ENCODED_PRIVATE_KEY
+    const base64EncryptionKey = process.env.BASE64_ENCRYPTION_KEY
     const publicKey = await genPublicKey(privateKey)
-    const Parameters = await getParams(uriEncodedPrivateKey, publicKey)
+    const Parameters = await getParams(uriEncodedPrivateKey, publicKey, base64EncryptionKey)
 
     return await cloudFormation.updateStack({
       StackName,

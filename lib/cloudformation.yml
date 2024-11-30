@@ -4,15 +4,21 @@ Parameters:
   SiteAssetDomain:
     Type: String
     Description: Fully qualified hostname for site assets
+  DevelopmentDomain:
+    Type: String
+    Description: Fully qualified hostname for development environment
   VideoAssetDomain:
     Type: String
     Description: Fully qualified hostname for video assets
-  SignerDomain:
+  AuthDomain:
     Type: String
-    Description: Fully qualified hostname for signer route
-  SignerPath:
+    Description: Fully qualified hostname for the auth API
+  OAuthCallbackPath:
     Type: String
-    Description: Signer route path including leading /
+    Description: OAuth callback route path including leading /
+  LoginPath:
+    Type: String
+    Description: Login route path including leading /
   HostedZoneId:
     Type: String
     Description: Route53 Hosted Zone Id
@@ -25,12 +31,6 @@ Parameters:
   SignedCookieDomain:
     Type: String
     Description: Domain used for the signed cookie that gives access to video assets
-  FacebookAppId:
-    Type: String
-    Description: Facebook client_id for authorizing Facebook app
-  FacebookAppSecret:
-    Type: String
-    Description: Facebook client_secret for authorizing Facebook app
   GoogleClientId:
     Type: String
     Description: Google client_id for authorizing Google sign in
@@ -49,6 +49,9 @@ Parameters:
   AccessSourceEmail:
     Type: String
     Description: The email address from which access request notifications will be sent
+  Base64EncryptionKey:
+    Type: String
+    Description: Base64 encoded encryption key for encrypting sensitive data
 
 Rules:
   domainParamsRequired:
@@ -63,28 +66,16 @@ Rules:
           - ""
       - Assert: !Not
         - !Equals
-          - !Ref SignerPath
+          - !Ref OAuthCallbackPath
           - ""
       - Assert: !Not
         - !Equals
-          - !Ref SignerDomain
+          - !Ref AuthDomain
           - ""
       - Assert: !Not
         - !Equals
           - !Ref HostedZoneId
           - ""
-  facebookParamsRequired:
-    Assertions:
-      - Assert: !Not
-        - !Equals
-          - !Ref FacebookAppId
-          - ""
-        AssertDescription: FacebookAppId is required
-      - Assert: !Not
-        - !Equals
-          - !Ref FacebookAppSecret
-          - ""
-        AssertDescription: FacebookAppSecret is required
   googleParamsRequired:
     Assertions:
       - Assert: !Not
@@ -265,156 +256,195 @@ Resources:
         DNSName: !GetAtt VideoDistribution.DomainName
         HostedZoneId: Z2FDTNDATAQYW2
 
-  SignerAPI:
+  AuthAPI:
     Type: AWS::ApiGatewayV2::Api
     Properties:
-      Name: !Sub ["${StackName}-signer", { StackName: !Ref AWS::StackName }]
-      Description: Proxies the cookie signing Lambda function
+      Name: !Sub ["${StackName}-auth", { StackName: !Ref AWS::StackName }]
+      Description: Handles OAuth2 auth
       ProtocolType: HTTP
       CorsConfiguration:
         AllowCredentials: True
         AllowOrigins:
+          - !GetAtt UserPool.ProviderURL
           - !Sub [ "https://${SiteAssetDomain}", { SiteAssetDomain: !Ref SiteAssetDomain }]
         AllowMethods:
           - GET
-        AllowHeaders:
-          - authorization
 
-  SignerRoute:
+  OAuthCallbackRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties:
-      ApiId: !Ref SignerAPI
-      AuthorizationType: JWT
-      AuthorizerId: !Ref SignerAuthorizer
-      RouteKey: !Sub ["GET ${SignerPath}", { SignerPath: !Ref SignerPath }]
-      Target: !Sub ["integrations/${Integration}", { Integration: !Ref SignerIntegration }]
+      ApiId: !Ref AuthAPI
+      RouteKey: !Sub ["GET ${OAuthCallbackPath}", { OAuthCallbackPath: !Ref OAuthCallbackPath }]
+      Target: !Sub ["integrations/${Integration}", { Integration: !Ref OAuthCallbackIntegration }]
 
-  SignerStage:
+  AuthStage:
     Type: AWS::ApiGatewayV2::Stage
     Properties:
-      ApiId: !Ref SignerAPI
+      ApiId: !Ref AuthAPI
       AutoDeploy: True
       StageName: $default
 
-  SignerIntegration:
+  OAuthCallbackIntegration:
     Type: AWS::ApiGatewayV2::Integration
     Properties:
-      ApiId: !Ref SignerAPI
+      ApiId: !Ref AuthAPI
       IntegrationMethod: GET
       IntegrationType: AWS_PROXY
-      IntegrationUri: !GetAtt SignerFunction.Arn
-      PayloadFormatVersion: 2.0
+      IntegrationUri: !GetAtt OAuthCallbackFunction.Arn
+      PayloadFormatVersion: 1.0
 
-  SignerAuthorizer:
-    Type: AWS::ApiGatewayV2::Authorizer
-    Properties:
-      ApiId: !Ref SignerAPI
-      AuthorizerType: JWT
-      IdentitySource:
-        - "$request.header.Authorization"
-      JwtConfiguration:
-        Audience:
-          - !Ref UserPoolClient
-        Issuer: !GetAtt UserPool.ProviderURL
-      Name: !Ref AWS::StackName
-
-  AuthorizerDomainName:
+  AuthDomainName:
     Type: AWS::ApiGatewayV2::DomainName
     Properties:
-      DomainName: !Ref SignerDomain
+      DomainName: !Ref AuthDomain
       DomainNameConfigurations:
-        - CertificateArn: !Ref SignerCertificate
-          CertificateName: !Sub ["${StackName}-signer", { StackName: !Ref AWS::StackName }]
+        - CertificateArn: !Ref AuthCertificate
+          CertificateName: !Sub ["${StackName}-auth", { StackName: !Ref AWS::StackName }]
 
-  SignerApiMapping:
+  AuthApiMapping:
     Type: AWS::ApiGatewayV2::ApiMapping
     Properties:
-      ApiId: !Ref SignerAPI
-      DomainName: !Ref AuthorizerDomainName
+      ApiId: !Ref AuthAPI
+      DomainName: !Ref AuthDomainName
       Stage: "$default"
 
-  SignerCertificate:
+  AuthCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       CertificateTransparencyLoggingPreference: ENABLED
-      DomainName: !Ref SignerDomain
+      DomainName: !Ref AuthDomain
       DomainValidationOptions:
-        - DomainName: !Ref SignerDomain
+        - DomainName: !Ref AuthDomain
           HostedZoneId: !Ref HostedZoneId
       ValidationMethod: DNS
 
-  SignerDNSRecord:
+  AuthDNSRecord:
     Type: AWS::Route53::RecordSet
     Properties:
       HostedZoneId: !Ref HostedZoneId
-      Name: !Ref SignerDomain
+      Name: !Ref AuthDomain
       Type: A
       AliasTarget:
-        DNSName: !GetAtt AuthorizerDomainName.RegionalDomainName
-        HostedZoneId: !GetAtt AuthorizerDomainName.RegionalHostedZoneId
+        DNSName: !GetAtt AuthDomainName.RegionalDomainName
+        HostedZoneId: !GetAtt AuthDomainName.RegionalHostedZoneId
 
-  SignerFunctionPermission:
+  OAuthCallbackFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt SignerFunction.Arn
+      FunctionName: !GetAtt OAuthCallbackFunction.Arn
       Action: lambda:InvokeFunction
       Principal: apigateway.amazonaws.com
-      SourceArn: !Sub ["arn:aws:execute-api:${Region}:${Account}:${API}/*/*/authorize", { Region: !Ref AWS::Region, Account: !Ref AWS::AccountId, API: !Ref SignerAPI }]
+      SourceArn: !Sub
+        - "arn:aws:execute-api:${Region}:${Account}:${API}/*/*${OAuthCallbackPath}"
+        # TODO: can that empty line be removed?
+        -
+          Region: !Ref AWS::Region
+          Account: !Ref AWS::AccountId
+          API: !Ref AuthAPI
+          OAuthCallbackPath: !Ref OAuthCallbackPath
 
-  SignerFunction:
+  OAuthCallbackFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ["${StackName}_Signer", { StackName: !Ref AWS::StackName }]
-      Description: Signs cookies for access to videos
+      FunctionName: !Sub ["${StackName}_OAuth_Callback", { StackName: !Ref AWS::StackName }]
+      Description: Retrieves tokens and signs cookies for access to videos
       Handler: index.handler
-      Role: !GetAtt SignerFunctionRole.Arn
+      Role: !GetAtt LogWriterFunctionRole.Arn
       Environment:
         Variables:
           CLOUDFRONT_KEY_PAIR_ID: !Ref CFVideoPublicKey
           URI_ENCODED_PRIVATE_KEY: !Ref VideoPrivateKeyUriEncoded
           COOKIE_DOMAIN: !Ref SignedCookieDomain
-          VIDEOS_URL: !Ref VideoAssetDomain
+          VIDEO_ASSET_DOMAIN: !Ref VideoAssetDomain
+          # TODO: make this dynamic
+          REDIRECT_URI: https://local.bengladwell.com/
+          ORIG_REDIRECT_URI: !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
+          USER_POOL_NAME: !Ref AWS::StackName
+          USER_POOL_CLIENT_ID: !Ref UserPoolClient
+          ENCRYPTION_KEY: !Ref Base64EncryptionKey
       Code:
         ZipFile: |
-          exports.handler = async (event) => {
-            const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
-            const { getSignedCookies } = require("@aws-sdk/cloudfront-signer");
-            const now = new Date()
-            const cookies = getSignedCookies({
-              privateKey,
-              keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
-              policy: JSON.stringify({
-                Statement: [{
-                  Resource: `https://${process.env.VIDEOS_URL}/*`,
-                  Condition: {
-                    DateLessThan: {
-                      "AWS:EpochTime": Math.floor(now.setDate(now.getDate() + 30) / 1000)
-                    }
-                  }
-                }]
-              })
-            })
+          const crypto = require('crypto')
+          const { getSignedCookies } = require('@aws-sdk/cloudfront-signer')
 
-            return {
-              statusCode: 200,
-              headers: {
-                "Content-Type": "application/json"
-              },
-              cookies: Object.entries(cookies).reduce((acc, [key, value]) => (
-                [
-                  ...acc,
-                  `${key}=${value}; Domain=${process.env.COOKIE_DOMAIN}`,
-                ]
-              ), [])
+          exports.handler = async (event) => {
+
+            // Validate state
+            const stateCookie = event.headers.Cookie.split('; ').find(cookie => cookie.startsWith('state='))
+            const encryptedString = stateCookie.split('=')[1]
+            const [ivHex, encrypted] = encryptedString.split(':');
+            const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY, 'base64')
+            const iv = Buffer.from(ivHex, 'hex');
+            const decipher = crypto.createDecipheriv('aes-256-cbc', encryptionKey, iv);
+            let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+            decrypted += decipher.final('utf8');
+            if (decrypted !== event.queryStringParameters.state) {
+              return {
+                statusCode: 400,
+                body: 'Invalid state'
+              }
+            }
+
+            try {
+              const response = await fetch(`https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/token`, {
+                method: 'POST',
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                  grant_type: 'authorization_code',
+                  code: event.queryStringParameters.code,
+                  client_id: process.env.USER_POOL_CLIENT_ID,
+                  redirect_uri: process.env.ORIG_REDIRECT_URI,
+                }).toString(),
+              })
+              const tokens = await response.json()
+
+              const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
+              const now = new Date()
+              const cookies = getSignedCookies({
+                privateKey,
+                keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+                policy: JSON.stringify({
+                  Statement: [{
+                    Resource: `https://${process.env.VIDEO_ASSET_DOMAIN}/*`,
+                    Condition: {
+                      DateLessThan: {
+                        "AWS:EpochTime": Math.floor(now.setDate(now.getDate() + 30) / 1000)
+                      }
+                    }
+                  }]
+                })
+              })
+
+              const idToken = `idToken=${tokens.id_token}; Secure; SameSite=Strict; Domain=${process.env.COOKIE_DOMAIN}`
+              
+              return {
+                statusCode: 302,
+                headers: {
+                  Location: process.env.REDIRECT_URI,
+                },
+                multiValueHeaders: {
+                  'Set-Cookie': Object.entries(cookies).reduce((acc, [key, value]) => (
+                    [
+                      ...acc,
+                      `${key}=${value}; Secure; HttpOnly; SameSite=Strict; Domain=${process.env.COOKIE_DOMAIN}`,
+                    ]
+                  ), [idToken])
+                }
+              }
+            } catch (e) {
+              console.log(e)
             }
           }
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
 
-  SignerFunctionRole:
+  LogWriterFunctionRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub ["${StackName}_Signer", { StackName: !Ref AWS::StackName }]
-      Description: Allows Signer lambda function to...
+      RoleName: !Sub ["${StackName}_LogWriter", { StackName: !Ref AWS::StackName }]
+      Description: Allows lambda functions to write logs
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -428,34 +458,92 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
 
+  LoginRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref AuthAPI
+      RouteKey: !Sub ["GET ${LoginPath}", { OAuthCallbackPath: !Ref LoginPath }]
+      Target: !Sub ["integrations/${Integration}", { Integration: !Ref LoginIntegration }]
+
+  LoginIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref AuthAPI
+      IntegrationMethod: GET
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt LoginFunction.Arn
+      PayloadFormatVersion: 1.0
+
+  LoginFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LoginFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub
+        - "arn:aws:execute-api:${Region}:${Account}:${API}/*/*${LoginPath}"
+        -
+          Region: !Ref AWS::Region
+          Account: !Ref AWS::AccountId
+          API: !Ref AuthAPI
+          LoginPath: !Ref LoginPath
+
+  LoginFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ["${StackName}_Login", { StackName: !Ref AWS::StackName }]
+      Description: Creates state and redirects to Cognito /authorize endpoint
+      Handler: index.handler
+      Role: !GetAtt LogWriterFunctionRole.Arn
+      Environment:
+        Variables:
+          USER_POOL_CLIENT_ID: !Ref UserPoolClient
+          USER_POOL_NAME: !Ref AWS::StackName
+          REDIRECT_URI: !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
+          ENCRYPTION_KEY: !Ref Base64EncryptionKey
+      Code:
+        ZipFile: |
+          const crypto = require('crypto')
+          const { URL } = require('url')
+
+          exports.handler = async (event) => {
+            const state = crypto.randomBytes(16).toString('hex')
+
+            // encrypt state
+            const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY, 'base64')
+            const iv = crypto.randomBytes(16)
+            const cipher = crypto.createCipheriv('aes-256-cbc', encryptionKey, iv)
+            let encrypted = cipher.update(state, 'utf8', 'hex')
+            encrypted += cipher.final('hex')
+            const encryptedState = `${iv.toString('hex')}:${encrypted}`
+
+            const location = new URL(`https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize`)
+            location.searchParams.append('response_type', 'code')
+            location.searchParams.append('client_id', process.env.USER_POOL_CLIENT_ID)
+            location.searchParams.append('redirect_uri', process.env.REDIRECT_URI)
+            location.searchParams.append('state', state)
+            event.queryStringParameters && Object.entries(event.queryStringParameters).forEach(([key, value]) => {
+              location.searchParams.append(key, value)
+            })
+
+            return {
+              statusCode: 302,
+              headers: {
+                Location: location.toString(),
+                'Set-Cookie': `state=${encryptedState}; Secure; HttpOnly; SameSite=Strict}`
+              }
+            }
+          }
+      Runtime: nodejs22.x
+
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Ref AWS::StackName
-      LambdaConfig:
-        PreAuthentication: !GetAtt UserAuthorizerFunction.Arn
-        PreSignUp: !GetAtt UserAuthorizerFunction.Arn
       UsernameAttributes:
         - email
       UsernameConfiguration:
         CaseSensitive: false
-
-  FacebookIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Properties:
-      UserPoolId: !Ref UserPool
-      ProviderType: Facebook
-      ProviderName: Facebook
-      ProviderDetails:
-        client_id: !Ref FacebookAppId
-        client_secret: !Ref FacebookAppSecret
-        authorize_scopes: public_profile, email
-        api_version: v17.0
-      AttributeMapping:
-        username: id
-        email: email
-        name: name
-        picture: picture
 
   GoogleIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
@@ -473,7 +561,6 @@ Resources:
         name: name
         picture: picture
 
-
   UserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
@@ -483,70 +570,38 @@ Resources:
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     DependsOn:
-      - FacebookIdentityProvider
       - GoogleIdentityProvider
       - UserPoolDomain
     Properties:
       UserPoolId: !Ref UserPool
-      GenerateSecret: true
+      GenerateSecret: false
       AllowedOAuthFlowsUserPoolClient: true
       AllowedOAuthFlows:
-        - implicit
+        - code
       AllowedOAuthScopes:
         - email
         - openid
         - aws.cognito.signin.user.admin
       CallbackURLs:
-        - http://localhost:8000/
-        - !Sub
-          - https://${Site}/
-          - { Site: !GetAtt Distribution.DomainName }
-        - !Sub
-          - https://${Site}/
-          - { Site: !Ref SiteAssetDomain }
+        - !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
       LogoutURLs:
-        - http://localhost:8000/
-        - !Sub
-          - https://${Site}/
-          - { Site: !GetAtt Distribution.DomainName }
-        - !Sub
-          - https://${Site}/
-          - { Site: !Ref SiteAssetDomain }
+        - !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
       ClientName: site-users
-      ExplicitAuthFlows:
-        - ALLOW_USER_PASSWORD_AUTH
-        - ALLOW_REFRESH_TOKEN_AUTH
+      # ExplicitAuthFlows:
+      #   - ALLOW_USER_PASSWORD_AUTH
+      #   - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
-        - Facebook
         - Google
 
-  UsersTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: !Ref AWS::StackName
-      AttributeDefinitions:
-        - AttributeName: email
-          AttributeType: S
-      KeySchema:
-        - AttributeName: email
-          KeyType: HASH
-      BillingMode: PAY_PER_REQUEST
-
-  AuthorizeInsideStoryUserPolicy:
+  NotifierPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      Description: Provides access to DynamoDB users table
-      ManagedPolicyName: !Sub ["${StackName}-AccessUsersTable", { StackName: !Ref AWS::StackName }]
+      Description: Allow NotifierFunction to send emails and write logs
+      ManagedPolicyName: !Sub ["${StackName}-SendEmails", { StackName: !Ref AWS::StackName }]
       PolicyDocument:
         Version: 2012-10-17
         Statement:
-          - Effect: Allow
-            Action:
-              - dynamodb:GetItem
-              - dynamodb:PutItem
-            Resource:
-              - !GetAtt UsersTable.Arn
           - Effect: Allow
             Action:
               - 'logs:CreateLogGroup'
@@ -561,11 +616,11 @@ Resources:
             Resource:
               - '*'
 
-  AuthorizerFunctionRole:
+  NotifierFunctionRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub ["${StackName}_Authorize_Users_Access", { StackName: !Ref AWS::StackName }]
-      Description: Allows AuthorizeInsideStoryUser lambda function to connect to DynamoDB
+      RoleName: !Sub ["${StackName}_Notify_Users_Access", { StackName: !Ref AWS::StackName }]
+      Description: Allows UserNotifierFunction to connect to send emails and write logs
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -577,93 +632,56 @@ Resources:
           - sts:AssumeRole
       Path: "/"
       ManagedPolicyArns:
-        - !Ref AuthorizeInsideStoryUserPolicy
+        - !Ref NotifierPolicy
 
-  AuthorizerFunctionPermission:
+  NotifierFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt UserAuthorizerFunction.Arn
+      FunctionName: !GetAtt UserNotifierFunction.Arn
       Action: lambda:InvokeFunction
       Principal: cognito-idp.amazonaws.com
       SourceArn: !GetAtt UserPool.Arn
 
-  UserAuthorizerFunction:
+  UserNotifierFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ["${StackName}_Authorize_Users", { StackName: !Ref AWS::StackName }]
-      Description: Authorizes Inside Story users
+      FunctionName: !Sub ["${StackName}_Notify_Users", { StackName: !Ref AWS::StackName }]
+      Description: Notifies Inside Story users
       Handler: index.handler
-      Role: !GetAtt AuthorizerFunctionRole.Arn
+      Role: !GetAtt NotifierFunctionRole.Arn
       Environment:
         Variables:
-          USER_TABLE: !Ref UsersTable
           ACCESS_ADMIN_EMAIL: !Ref AccessAdminEmail
           ACCESS_SOURCE_EMAIL: !Ref AccessSourceEmail
       Code:
         ZipFile: |
-          const { DynamoDBClient } = require("@aws-sdk/client-dynamodb")
-          const { DynamoDBDocumentClient, GetCommand, PutCommand } = require("@aws-sdk/lib-dynamodb")
           const { SendEmailCommand } = require("@aws-sdk/client-ses")
           const { SESClient } = require("@aws-sdk/client-ses")
           const sesClient = new SESClient()
 
-          const client = new DynamoDBClient({})
-          const docClient = DynamoDBDocumentClient.from(client)
-
           exports.handler = async (event, context, callback) => {
-            const getCommand = new GetCommand({
-              Key: {
-                email: event.request.userAttributes.email
-              },
-              TableName: process.env.USER_TABLE
-            })
-
             try {
-              const data = await docClient.send(getCommand)
               const { email, name } = event.request.userAttributes
 
-              if (!data.Item) {
-                const sendEmailCommand = new SendEmailCommand({
-                  Destination: {
-                    ToAddresses: [process.env.ACCESS_ADMIN_EMAIL]
+              const sendEmailCommand = new SendEmailCommand({
+                Destination: {
+                  ToAddresses: [process.env.ACCESS_ADMIN_EMAIL]
+                },
+                Message: {
+                  Body: {
+                    Text: { Data: `${name} <${email}> has requested access` }
                   },
-                  Message: {
-                    Body: {
-                      Text: { Data: `${name} <${email}> has requested access` }
-                    },
 
-                    Subject: { Data: `Access request: ${name} <${email}>` }
-                  },
-                  Source: process.env.ACCESS_SOURCE_EMAIL
-                })
-
-                await docClient.send(new PutCommand({
-                  TableName: process.env.USER_TABLE,
-                  Item: {
-                    email: email,
-                    name: name,
-                    is_approved: false,
-                    created_at: (new Date()).toISOString()
-                  }
-                }))
-
-                await sesClient.send(sendEmailCommand)
-
-                callback(new Error(`Unknown user; email=${email}; name=${name}`), event)
-                return
-              }
-
-              if (!(data.Item && data.Item.is_approved)) {
-                callback(new Error(`Unapproved user; email=${email}; name=${name}`), event)
-                return
-              }
-
+                  Subject: { Data: `Access request: ${name} <${email}>` }
+                },
+                Source: process.env.ACCESS_SOURCE_EMAIL
+              })
               callback(null, event)
             } catch (e) {
               callback(e)
             }
           }
-      Runtime: nodejs20.x
+      Runtime: nodejs22.x
 
 Outputs:
   BucketName:
@@ -678,9 +696,9 @@ Outputs:
   VideoDomain:
     Description: The CloudFront domain for video assets
     Value: !Ref VideoAssetDomain
-  SignerDomain:
-    Description: The CloudFront domain for signer route
-    Value: !Ref SignerDomain
+  AuthDomain:
+    Description: The CloudFront domain for authenticator route
+    Value: !Ref AuthDomain
   VideoAssetOriginAccessIdentity:
     Description: The ID for the origin access identity that will be used by the video CloudFront distribution
     Value: !Ref VideoAssetOriginAccessIdentity

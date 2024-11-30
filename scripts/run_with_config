@@ -19,7 +19,7 @@ source .env
 SITE_BUCKET=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "BucketName").OutputValue'`
 SITE_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SiteDomain").OutputValue'`
 VIDEO_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoDomain").OutputValue'`
-SIGNER_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "SignerDomain").OutputValue'`
+AUTH_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "AuthDomain").OutputValue'`
 USER_POOL_NAME=$STACK_NAME
 USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
 VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoAssetOriginAccessIdentity").OutputValue'`

@@ -50,9 +50,11 @@ Allows for every user to be specifically granted access by the administrator. Th
 * brew install caddy imagemagick
 
 ### Run the site locally
-* bin/jekyll serve
+* scripts/run_with_config -- bundle exec ruby -r pry -S jekyll serve
+  * scripts/run_with_config - pulls configuration from CloudFormation stack
+  * -r pry - includes pry for debugging
 * add `127.0.0.1  local.bengladwell.com` to /etc/hosts
-* caddy --to localhost:4000 --from local.bengladwell.com --internal-certs
+* caddy reverse-proxy --to localhost:4000 --from local.bengladwell.com --internal-certs
 
 To start a new feature:
 * create a new branch (no underscores)

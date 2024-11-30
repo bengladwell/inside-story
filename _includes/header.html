@@ -1,6 +1,7 @@
 {% assign sorted_videos = site.videos | sort: "year" %}
 {% assign first_year = sorted_videos.first.year %}
 {% assign last_year = sorted_videos.last.year %}
+
 <header class='site-header'>
   <p>
     <a href="{% link index.html %}" class='logo' title="{{ site.title }}">
@@ -11,12 +12,12 @@
   <div class="user">
   </div>
   <div class="login">
-    <button
+    <a
       class="login-with-google-button"
-      onclick="window.location.href = 'https://{{ site.user_pool_name }}.auth.us-east-1.amazoncognito.com/oauth2/authorize?response_type=token&client_id={{ site.user_pool_client_id }}&redirect_uri={{ site.encoded_redirect_uri }}&identity_provider=Google';"
+      href="https://{{ site.auth_domain }}{{ site.login_path }}?identity_provider=Google"
     >
       <img src="{% link /assets/images/google-g_100.png %}" alt="Google" />
       Login with Google
-    </button>
+    </a>
   </div>
 </header>

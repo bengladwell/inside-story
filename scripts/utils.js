@@ -19,15 +19,9 @@ async function genPublicKey (privateKey) {
   return stdout.substring(0, stdout.length - 1)
 }
 
-async function getParams (uriEncodedPrivateKey, publicKey) {
+async function getParams (uriEncodedPrivateKey, publicKey, encryptionKey) {
   const StackName = await stackName()
   return [{
-    ParameterKey: 'FacebookAppId',
-    ParameterValue: process.env.FACEBOOK_APP_ID
-  }, {
-    ParameterKey: 'FacebookAppSecret',
-    ParameterValue: process.env.FACEBOOK_APP_SECRET
-  }, {
     ParameterKey: 'GoogleClientId',
     ParameterValue: process.env.GOOGLE_CLIENT_ID
   }, {
@@ -65,16 +59,25 @@ async function getParams (uriEncodedPrivateKey, publicKey) {
       ? `${process.env.SITE_ASSET_HOST_NAME}-videos.${process.env.HOSTED_ZONE_DOMAIN}`
       : `${StackName}-videos.${process.env.HOSTED_ZONE_DOMAIN}`
   }, {
-    ParameterKey: 'SignerDomain',
+    ParameterKey: 'AuthDomain',
     ParameterValue: StackName === 'inside-story'
-      ? `${process.env.SITE_ASSET_HOST_NAME}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
-      : `${StackName}-signer.${process.env.HOSTED_ZONE_DOMAIN}`
+      ? `${process.env.SITE_ASSET_HOST_NAME}-auth.${process.env.HOSTED_ZONE_DOMAIN}`
+      : `${StackName}-auth.${process.env.HOSTED_ZONE_DOMAIN}`
   }, {
-    ParameterKey: 'SignerPath',
-    ParameterValue: process.env.SIGNER_PATH
+    ParameterKey: 'OAuthCallbackPath',
+    ParameterValue: process.env.OAUTH_CALLBACK_PATH
+  }, {
+    ParameterKey: 'LoginPath',
+    ParameterValue: process.env.LOGIN_PATH
   }, {
     ParameterKey: 'SignedCookieDomain',
     ParameterValue: process.env.HOSTED_ZONE_DOMAIN
+  }, {
+    ParameterKey: 'DevelopmentDomain',
+    ParameterValue: process.env.DEVELOPMENT_DOMAIN
+  }, {
+    ParameterKey: 'Base64EncryptionKey',
+    ParameterValue: encryptionKey
   }]
 }
 
