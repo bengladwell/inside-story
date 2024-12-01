@@ -18,6 +18,7 @@ module Jekyll
       site.config['login_path'] = ENV['LOGIN_PATH']
       site.config['user_pool_name'] = ENV['USER_POOL_NAME']
       site.config['user_pool_client_id'] = ENV['USER_POOL_CLIENT_ID']
+      site.config['user_pool_provider_url'] = ENV['USER_POOL_PROVIDER_URL']
     end
 
   end

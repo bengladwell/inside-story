@@ -22,6 +22,7 @@ VIDEO_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoDomai
 AUTH_DOMAIN=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "AuthDomain").OutputValue'`
 USER_POOL_NAME=$STACK_NAME
 USER_POOL_CLIENT_ID=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolClientId").OutputValue'`
+USER_POOL_PROVIDER_URL=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "UserPoolProviderURL").OutputValue'`
 VIDEO_ASSET_ORIGIN_ACCESS_IDENTITY=`echo $STACK_OUTPUT | jq -r '.[] | select(.OutputKey == "VideoAssetOriginAccessIdentity").OutputValue'`
 
 set +o allexport

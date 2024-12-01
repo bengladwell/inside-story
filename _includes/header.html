@@ -2,6 +2,20 @@
 {% assign first_year = sorted_videos.first.year %}
 {% assign last_year = sorted_videos.last.year %}
 
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/js-cookie/3.0.5/js.cookie.min.js"
+  integrity="sha512-nlp9/l96/EpjYBx7EP7pGASVXNe80hGhYAUrjeXnu/fyF5Py0/RXav4BBNs7n5Hx1WFhOEOWSAVjGeC3oKxDVQ=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jose/5.9.6/index.umd.min.js"
+  integrity="sha512-8HKdT0mpKRSXLF6WZg1Aj64iGSNCMh3Jh4DB/EzCMxqBheCnfMvMau054cRZHEnugGNea+4yxQXQwCAyIlZ1Bw=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script src="{% link assets/js/auth.js %}" defer></script>
+
 <header class='site-header'>
   <p>
     <a href="{% link index.html %}" class='logo' title="{{ site.title }}">
@@ -10,6 +24,7 @@
   </p>
   <p>{{ first_year }} - {{ last_year }}</p>
   <div class="user">
+    <img src="" className="user__image" />
   </div>
   <div class="login">
     <a

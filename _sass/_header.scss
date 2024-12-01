@@ -37,4 +37,13 @@
       margin: 0 0.75em 0 0;
     }
   }
+
+  .user {
+    display: none;
+
+    &__image {
+      height: 50px;
+      width: 50px;
+    }
+  }
 }

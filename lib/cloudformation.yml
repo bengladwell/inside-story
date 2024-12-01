@@ -544,6 +544,9 @@ Resources:
         - email
       UsernameConfiguration:
         CaseSensitive: false
+      LambdaConfig:
+        # PreSignUp: !GetAtt ClaimsAdderFunction.Arn
+        PreTokenGeneration: !GetAtt ClaimsAdderFunction.Arn
 
   GoogleIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
@@ -587,12 +590,64 @@ Resources:
       LogoutURLs:
         - !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
       ClientName: site-users
+      IdTokenValidity: 24
+      AccessTokenValidity: 24
+      TokenValidityUnits:
+        IdToken: hours
+        AccessToken: hours
       # ExplicitAuthFlows:
       #   - ALLOW_USER_PASSWORD_AUTH
       #   - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
         - Google
+
+  ClaimsAdderFunctionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub ["${StackName}_Claims_Adder", { StackName: !Ref AWS::StackName }]
+      Description: Allows lambda functions to write logs
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  ClaimsAdderFunctionPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt ClaimsAdderFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: cognito-idp.amazonaws.com
+      SourceArn: !GetAtt UserPool.Arn
+
+  ClaimsAdderFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ["${StackName}_Claims_Adder", { StackName: !Ref AWS::StackName }]
+      Description: Adds claims to id token
+      Handler: index.handler
+      Role: !GetAtt ClaimsAdderFunctionRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            event.response = {
+              claimsOverrideDetails: {
+                claimsToAddOrOverride: {
+                  name: event.request.userAttributes.name,
+                  picture: event.request.userAttributes.picture,
+                }
+              }
+            }
+            return event
+          }
+      Runtime: nodejs22.x
 
   NotifierPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
@@ -690,6 +745,9 @@ Outputs:
   UserPoolClientId:
     Description: Cognito User Pool Client id
     Value: !Ref UserPoolClient
+  UserPoolProviderURL:
+    Description: Cognito User Pool Provider URL
+    Value: !GetAtt UserPool.ProviderURL
   SiteDomain:
     Description: The CloudFront domain for site assets
     Value: !Ref SiteAssetDomain
