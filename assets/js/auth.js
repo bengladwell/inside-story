@@ -1,5 +1,10 @@
 ---
 ---
+function logout() {
+  Cookies.remove('idToken', {domain: '{{ site.hosted_zone_domain }}', secure: true, sameSite: 'strict'})
+  location.reload()
+}
+
 async function validateJWT(token) {
   const jwksUri = '{{ site.user_pool_provider_url }}/.well-known/jwks.json'
 
@@ -28,6 +33,8 @@ async function validateJWT(token) {
     const userElement = document.querySelector('.user')
     userElement.querySelector('img').src = picture
     userElement.style.display = 'block'
+    const logoutElement = document.querySelector('.logout')
+    logoutElement.style.display = 'block'
   } catch (error) {
     console.error(error)
   }

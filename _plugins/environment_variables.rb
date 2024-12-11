@@ -15,6 +15,7 @@ module Jekyll
       site.config['encoded_redirect_uri'] = URI.encode_www_form_component('https://local.bengladwell.com/')
       site.config['video_domain'] = ENV['VIDEO_DOMAIN']
       site.config['auth_domain'] = ENV['AUTH_DOMAIN']
+      site.config['hosted_zone_domain'] = ENV['HOSTED_ZONE_DOMAIN']
       site.config['login_path'] = ENV['LOGIN_PATH']
       site.config['user_pool_name'] = ENV['USER_POOL_NAME']
       site.config['user_pool_client_id'] = ENV['USER_POOL_CLIENT_ID']
