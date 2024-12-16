@@ -10,19 +10,31 @@
 
   <body>
 
-    <div class='site-layout'>
+    <template id="access-denied-anonymous-template">
+      <div class="unauth-message">
+        <p>Hi!</p>
+        <p>These videos are for my family and friends.</p>
+        <p>Please reach out if you would like access.</p>
+        <p class="unauth-message__small">
+          I must enable access for you. Then you will be able to login.
+        </p>
+      </div>
+    </template>
 
+    <template id="access-denied-user-template">
+      <div class="unauth-message unknown-message">
+        <p>Hi <span id="unauth-message__name"></span>!</p>
+        <p>I have been notified that you would like to view this site.</p>
+        <p>Once I enable access, I will send you an email.</p>
+      </div>
+    </template>
+
+    <div class='site-layout'>
       {% include header.html %}
 
-      <main class="page-content" aria-label="Content">
-        <div class="wrapper">
-          {{ content }}
-        </div>
+      <main>
+        {{ content }}
       </main>
-
-      {% comment %}
-      {%- include footer.html -%}
-      {% endcomment %}
     </div>
 
   </body>

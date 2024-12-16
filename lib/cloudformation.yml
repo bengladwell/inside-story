@@ -540,13 +540,37 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Ref AWS::StackName
+      LambdaConfig:
+        PreTokenGeneration: !GetAtt ClaimsAdderFunction.Arn
+        # Specify by explict ARN rather than `UserInitializerFunction.Arn` to avoid circular dependency
+        PostConfirmation: !Sub ["arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${StackName}_UserInitializer", { StackName: !Ref AWS::StackName }]
+      AutoVerifiedAttributes:
+        - email
       UsernameAttributes:
         - email
       UsernameConfiguration:
         CaseSensitive: false
-      LambdaConfig:
-        # PreSignUp: !GetAtt ClaimsAdderFunction.Arn
-        PreTokenGeneration: !GetAtt ClaimsAdderFunction.Arn
+      MfaConfiguration: "OFF"
+      Policies:
+        PasswordPolicy:
+          RequireLowercase: true
+          RequireSymbols: false
+          RequireNumbers: true
+          MinimumLength: 8
+          RequireUppercase: true
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
+      Schema:
+        - Name: is_approved
+          AttributeDataType: String
+          Mutable: true
+          Required: false
+        - Name: is_admin
+          AttributeDataType: String
+          Mutable: true
+          Required: false
 
   GoogleIdentityProvider:
     Type: AWS::Cognito::UserPoolIdentityProvider
@@ -595,11 +619,9 @@ Resources:
       TokenValidityUnits:
         IdToken: hours
         AccessToken: hours
-      # ExplicitAuthFlows:
-      #   - ALLOW_USER_PASSWORD_AUTH
-      #   - ALLOW_REFRESH_TOKEN_AUTH
       PreventUserExistenceErrors: ENABLED
       SupportedIdentityProviders:
+        - COGNITO
         - Google
 
   ClaimsAdderFunctionRole:
@@ -640,6 +662,7 @@ Resources:
             event.response = {
               claimsOverrideDetails: {
                 claimsToAddOrOverride: {
+                  is_approved: event.request.userAttributes['custom:is_approved'] == 'true' ? 'true' : 'false',
                   name: event.request.userAttributes.name,
                   picture: event.request.userAttributes.picture,
                 }
@@ -649,11 +672,10 @@ Resources:
           }
       Runtime: nodejs22.x
 
-  NotifierPolicy:
+  UserInitializerFunctionPolicy:
     Type: 'AWS::IAM::ManagedPolicy'
     Properties:
-      Description: Allow NotifierFunction to send emails and write logs
-      ManagedPolicyName: !Sub ["${StackName}-SendEmails", { StackName: !Ref AWS::StackName }]
+      Description: Allow UserInitializerFunction to send emails, update cognito, and write logs
       PolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -666,16 +688,21 @@ Resources:
               - '*'
           - Effect: Allow
             Action:
+              - cognito-idp:AdminUpdateUserAttributes
+            Resource:
+              - !GetAtt UserPool.Arn
+          - Effect: Allow
+            Action:
               - 'ses:SendEmail'
               - 'ses:SendRawEmail'
             Resource:
               - '*'
 
-  NotifierFunctionRole:
+  UserInitializerFunctionRole:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: !Sub ["${StackName}_Notify_Users_Access", { StackName: !Ref AWS::StackName }]
-      Description: Allows UserNotifierFunction to connect to send emails and write logs
+      RoleName: !Sub ["${StackName}_User_Initializer", { StackName: !Ref AWS::StackName }]
+      Description: Allows UserInitializerFunction to connect to send emails and write logs
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -687,23 +714,23 @@ Resources:
           - sts:AssumeRole
       Path: "/"
       ManagedPolicyArns:
-        - !Ref NotifierPolicy
+        - !Ref UserInitializerFunctionPolicy
 
-  NotifierFunctionPermission:
+  UserInitializerFunctionPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      FunctionName: !GetAtt UserNotifierFunction.Arn
+      FunctionName: !GetAtt UserInitializerFunction.Arn
       Action: lambda:InvokeFunction
       Principal: cognito-idp.amazonaws.com
       SourceArn: !GetAtt UserPool.Arn
 
-  UserNotifierFunction:
+  UserInitializerFunction:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ["${StackName}_Notify_Users", { StackName: !Ref AWS::StackName }]
-      Description: Notifies Inside Story users
+      FunctionName: !Sub ["${StackName}_UserInitializer", { StackName: !Ref AWS::StackName }]
+      Description: Initializes Inside Story users
       Handler: index.handler
-      Role: !GetAtt NotifierFunctionRole.Arn
+      Role: !GetAtt UserInitializerFunctionRole.Arn
       Environment:
         Variables:
           ACCESS_ADMIN_EMAIL: !Ref AccessAdminEmail
@@ -714,10 +741,31 @@ Resources:
           const { SESClient } = require("@aws-sdk/client-ses")
           const sesClient = new SESClient()
 
-          exports.handler = async (event, context, callback) => {
-            try {
-              const { email, name } = event.request.userAttributes
+          const { CognitoIdentityProviderClient, AdminUpdateUserAttributesCommand } = require('@aws-sdk/client-cognito-identity-provider')
+          const cognitoClient = new CognitoIdentityProviderClient({});
 
+          exports.handler = async (event) => {
+            const { userPoolId, userName } = event
+            const { email, name } = event.request.userAttributes
+
+            const params = {
+              UserAttributes: [{
+                Name: 'custom:is_approved',
+                Value: 'false'
+              }],
+              UserPoolId: userPoolId,
+              Username: userName,
+            }
+
+            try {
+              const command = new AdminUpdateUserAttributesCommand(params)
+              await cognitoClient.send(command)
+            } catch (error) {
+              console.error('Error updating custom attribute:', error);
+              throw error
+            }
+
+            try {
               const sendEmailCommand = new SendEmailCommand({
                 Destination: {
                   ToAddresses: [process.env.ACCESS_ADMIN_EMAIL]
@@ -731,10 +779,13 @@ Resources:
                 },
                 Source: process.env.ACCESS_SOURCE_EMAIL
               })
-              callback(null, event)
-            } catch (e) {
-              callback(e)
+              await sesClient.send(sendEmailCommand)
+            } catch (error) {
+              console.error('Error sending email:', error);
+              throw error
             }
+
+            return event
           }
       Runtime: nodejs22.x
 

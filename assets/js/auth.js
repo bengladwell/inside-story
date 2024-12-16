@@ -1,7 +1,11 @@
 ---
 ---
-function logout() {
+function removeIdToken() {
   Cookies.remove('idToken', {domain: '{{ site.hosted_zone_domain }}', secure: true, sameSite: 'strict'})
+}
+
+function logout() {
+  removeIdToken()
   location.reload()
 }
 
@@ -24,10 +28,14 @@ async function validateJWT(token) {
 (async () => {
   const idToken = Cookies.get('idToken')
 
-  if (!idToken) return
+  if (!idToken) {
+    const contentElement = document.querySelector('main')
+    contentElement.innerHTML = document.querySelector('#access-denied-anonymous-template').innerHTML
+    return
+  }
 
   try {
-    const { name, picture } = await validateJWT(idToken);
+    const { name, picture, is_approved: isApproved } = await validateJWT(idToken);
     const loginElement = document.querySelector('.login')
     loginElement.style.display = 'none'
     const userElement = document.querySelector('.user')
@@ -35,6 +43,14 @@ async function validateJWT(token) {
     userElement.style.display = 'block'
     const logoutElement = document.querySelector('.logout')
     logoutElement.style.display = 'block'
+
+    if (isApproved === 'false') {
+      const contentElement = document.querySelector('main')
+      contentElement.innerHTML = document.querySelector('#access-denied-user-template').innerHTML
+      contentElement.querySelector('#unauth-message__name').textContent = name
+      removeIdToken()
+      return
+    }
   } catch (error) {
     console.error(error)
   }
