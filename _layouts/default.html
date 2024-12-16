@@ -6,6 +6,12 @@
     <title>{{ site.title }}</title>
     <link rel="stylesheet" href="{{ '/assets/stylesheets/main.css' | relative_url }}">
     <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+    {% if page.image %}
+      <meta property="og:image" content="/assets/images/processed/{{ page.image | replace: ".jpg", "_300x300.jpg" }}">
+    {% endif %}
+    {% if page.label %}
+      <meta property="og:title" content="{{ page.label }}">
+    {% endif %}
   </head>
 
   <body>
