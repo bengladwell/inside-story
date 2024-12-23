@@ -4,37 +4,16 @@
   "description": "Video hosting on AWS with gated auth",
   "version": "0.1.0",
   "author": "Ben Gladwell <bengladwell@gmail.com>",
-  "keywords": [
-    "gatsby"
-  ],
   "license": "MIT",
-  "scripts": {
-    "build": "scripts/set_env && gatsby build",
-    "build_and_deploy": "scripts/set_env && gatsby build && scripts/deploy",
-    "develop": "scripts/set_env && gatsby develop",
-    "deploy": "scripts/deploy",
-    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
-    "start": "npm run develop",
-    "serve": "gatsby serve",
-    "clean": "gatsby clean",
-    "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1",
-    "stack:validate-template": "aws cloudformation validate-template --template-body file://lib/cloudformation.yml",
-    "stack:create": "scripts/create_stack.js",
-    "stack:status": "scripts/stack_status.sh",
-    "stack:delete": "scripts/destroy_stack.js",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint gatsby-config.ts gatsby-node.ts src/**/*.ts?"
-  },
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
+    "@aws-sdk/client-cloudformation": "^3.592.0",
+    "@aws-sdk/client-s3": "^3.592.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.592.0",
     "@aws-sdk/cloudfront-signer": "^3.576.0",
     "dotenv": "^16.4.5",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "modularscale-sass": "^3.0.10"
-  },
-  "devDependencies": {
-    "@aws-sdk/client-cloudformation": "^3.592.0",
-    "@aws-sdk/client-s3": "^3.592.0"
   }
 }
