@@ -356,8 +356,6 @@ Resources:
           URI_ENCODED_PRIVATE_KEY: !Ref VideoPrivateKeyUriEncoded
           COOKIE_DOMAIN: !Ref SignedCookieDomain
           VIDEO_ASSET_DOMAIN: !Ref VideoAssetDomain
-          # TODO: make this dynamic
-          REDIRECT_URI: https://local.bengladwell.com/
           ORIG_REDIRECT_URI: !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
           USER_POOL_NAME: !Ref AWS::StackName
           USER_POOL_CLIENT_ID: !Ref UserPoolClient
@@ -378,7 +376,10 @@ Resources:
             const decipher = crypto.createDecipheriv('aes-256-cbc', encryptionKey, iv);
             let decrypted = decipher.update(encrypted, 'hex', 'utf8');
             decrypted += decipher.final('utf8');
-            if (decrypted !== event.queryStringParameters.state) {
+            console.log(decrypted)
+            const [stateToken, encodedReferer] = decrypted.split(':')
+            const referer = decodeURIComponent(encodedReferer)
+            if (stateToken !== event.queryStringParameters.state) {
               return {
                 statusCode: 400,
                 body: 'Invalid state'
@@ -423,7 +424,7 @@ Resources:
               return {
                 statusCode: 302,
                 headers: {
-                  Location: process.env.REDIRECT_URI,
+                  Location: referer,
                 },
                 multiValueHeaders: {
                   'Set-Cookie': Object.entries(cookies).reduce((acc, [key, value]) => (
@@ -501,13 +502,16 @@ Resources:
           USER_POOL_NAME: !Ref AWS::StackName
           REDIRECT_URI: !Sub ["https://${AuthDomain}/oauth_callback", { AuthDomain: !Ref AuthDomain }]
           ENCRYPTION_KEY: !Ref Base64EncryptionKey
+          SITE_URL: !Sub [ "https://${SiteAssetDomain}", { SiteAssetDomain: !Ref SiteAssetDomain }]
       Code:
         ZipFile: |
           const crypto = require('crypto')
           const { URL } = require('url')
 
           exports.handler = async (event) => {
-            const state = crypto.randomBytes(16).toString('hex')
+            const referer = encodeURIComponent(event.headers.referer || process.env.SITE_URL)
+            const stateToken = crypto.randomBytes(16).toString('hex')
+            const state = `${stateToken}:${referer}`
 
             // encrypt state
             const encryptionKey = Buffer.from(process.env.ENCRYPTION_KEY, 'base64')
@@ -521,7 +525,7 @@ Resources:
             location.searchParams.append('response_type', 'code')
             location.searchParams.append('client_id', process.env.USER_POOL_CLIENT_ID)
             location.searchParams.append('redirect_uri', process.env.REDIRECT_URI)
-            location.searchParams.append('state', state)
+            location.searchParams.append('state', stateToken)
             event.queryStringParameters && Object.entries(event.queryStringParameters).forEach(([key, value]) => {
               location.searchParams.append(key, value)
             })

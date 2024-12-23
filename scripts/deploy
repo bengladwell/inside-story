@@ -1,6 +1,6 @@
 #!/bin/bash
 
-aws s3 sync --delete public/ s3://$SITE_BUCKET
+aws s3 sync --delete _site/ s3://$SITE_BUCKET
 
 scripts/update_cors.js
 scripts/update_video_bucket_policy.js
