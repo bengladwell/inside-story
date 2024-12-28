@@ -25,6 +25,16 @@ async function validateJWT(token) {
 
 }
 
+function notifyUnauth() {
+  const contentElement = document.querySelector('main')
+  contentElement.innerHTML = document.querySelector('#access-denied-user-template').innerHTML
+  contentElement.querySelector('#unauth-message__name').textContent = name
+}
+
+function getInitials(name) {
+  return name.split(' ').map((word) => word[0].toUpperCase()).join('')
+}
+
 (async () => {
   const idToken = Cookies.get('idToken')
 
@@ -39,19 +49,26 @@ async function validateJWT(token) {
     const loginElement = document.querySelector('.login')
     loginElement.style.display = 'none'
     const userElement = document.querySelector('.user')
-    userElement.querySelector('img').src = picture
+    const imageElement = userElement.querySelector('img')
+    if (picture) {
+      imageElement.src = picture
+    } else {
+      imageElement.style.display = 'none'
+      const initialsElment = userElement.querySelector('.user__initials')
+      initialsElment.style.display = 'flex'
+      initialsElment.innerText = getInitials(name)
+    }
     userElement.style.display = 'block'
     const logoutElement = document.querySelector('.logout')
     logoutElement.style.display = 'block'
 
     if (isApproved === 'false') {
-      const contentElement = document.querySelector('main')
-      contentElement.innerHTML = document.querySelector('#access-denied-user-template').innerHTML
-      contentElement.querySelector('#unauth-message__name').textContent = name
+      notifyUnauth()
       removeIdToken()
       return
     }
   } catch (error) {
+    notifyUnauth()
     console.error(error)
   }
 })()

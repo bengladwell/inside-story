@@ -521,14 +521,11 @@ Resources:
             encrypted += cipher.final('hex')
             const encryptedState = `${iv.toString('hex')}:${encrypted}`
 
-            const location = new URL(`https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/oauth2/authorize`)
+            const location = new URL(`https://${process.env.USER_POOL_NAME}.auth.us-east-1.amazoncognito.com/login`)
             location.searchParams.append('response_type', 'code')
             location.searchParams.append('client_id', process.env.USER_POOL_CLIENT_ID)
             location.searchParams.append('redirect_uri', process.env.REDIRECT_URI)
             location.searchParams.append('state', stateToken)
-            event.queryStringParameters && Object.entries(event.queryStringParameters).forEach(([key, value]) => {
-              location.searchParams.append(key, value)
-            })
 
             return {
               statusCode: 302,
@@ -567,6 +564,10 @@ Resources:
           - Name: verified_email
             Priority: 1
       Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
         - Name: is_approved
           AttributeDataType: String
           Mutable: true

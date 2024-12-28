@@ -25,14 +25,14 @@
   <p>{{ first_year }} - {{ last_year }}</p>
   <div class="user">
     <img src="" className="user__image" />
+    <div class="user__initials"></div>
   </div>
   <div class="login">
     <a
-      class="login-with-google-button"
-      href="https://{{ site.auth_domain }}{{ site.login_path }}?identity_provider=Google"
+      class="login-signup"
+      href="https://{{ site.auth_domain }}{{ site.login_path }}"
     >
-      <img src="{% link /assets/images/google-g_100.png %}" alt="Google" />
-      Login with Google
+      Login or Signup
     </a>
   </div>
   <button class="logout" onclick="logout()">Logout</button>

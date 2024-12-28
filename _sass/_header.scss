@@ -45,6 +45,16 @@
       height: 50px;
       width: 50px;
     }
+
+    &__initials {
+      height: 50px;
+      width: 50px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      overflow: hidden;
+    }
   }
 
   .logout {
