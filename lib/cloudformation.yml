@@ -365,6 +365,12 @@ Resources:
           const crypto = require('crypto')
           const { getSignedCookies } = require('@aws-sdk/cloudfront-signer')
 
+          const base64Decode = (str) => {
+            // Replace Base64URL encoding with Base64 encoding
+            const base64 = str.replace(/-/g, '+').replace(/_/g, '/')
+            return Buffer.from(base64, 'base64').toString('utf-8')
+          }
+
           exports.handler = async (event) => {
 
             // Validate state
@@ -402,22 +408,28 @@ Resources:
               })
               const tokens = await response.json()
 
-              const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
-              const now = new Date()
-              const cookies = getSignedCookies({
-                privateKey,
-                keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
-                policy: JSON.stringify({
-                  Statement: [{
-                    Resource: `https://${process.env.VIDEO_ASSET_DOMAIN}/*`,
-                    Condition: {
-                      DateLessThan: {
-                        "AWS:EpochTime": Math.floor(now.setDate(now.getDate() + 30) / 1000)
+              const [, idPayload] = tokens.id_token.split('.')
+              const decodedIdPayload = JSON.parse(base64Decode(idPayload))
+
+              let cookies = {}
+              if (decodedIdPayload.is_approved == 'true') {
+                const privateKey = decodeURI(process.env.URI_ENCODED_PRIVATE_KEY)
+                const now = new Date()
+                cookies = getSignedCookies({
+                  privateKey,
+                  keyPairId: process.env.CLOUDFRONT_KEY_PAIR_ID,
+                  policy: JSON.stringify({
+                    Statement: [{
+                      Resource: `https://${process.env.VIDEO_ASSET_DOMAIN}/*`,
+                      Condition: {
+                        DateLessThan: {
+                          "AWS:EpochTime": Math.floor(now.setDate(now.getDate() + 30) / 1000)
+                        }
                       }
-                    }
-                  }]
+                    }]
+                  })
                 })
-              })
+              }
 
               const idToken = `idToken=${tokens.id_token}; Secure; SameSite=Strict; Domain=${process.env.COOKIE_DOMAIN}`
               
