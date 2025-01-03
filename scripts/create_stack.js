@@ -20,15 +20,25 @@ async function genPrivateKey () {
   return stdout.substring(0, stdout.length - 1)
 }
 
+async function genEncryptionKey () {
+  const { stdout, stderr } = await exec('openssl rand -base64 32')
+  if (stderr) throw new Error(stderr)
+
+  return stdout.substring(0, stdout.length - 1)
+}
+
 async function createStack () {
   try {
     const cfTemplate = await readFile('lib/cloudformation.yml', 'utf8')
     const StackName = await stackName()
     const privateKey = await genPrivateKey()
+    const encryptionKey = await genEncryptionKey()
     const uriEncodedPrivateKey = encodeURI(privateKey)
-    await writeFile(`.secrets.${StackName}`, uriEncodedPrivateKey)
+    // WARNING: I have not yet tested this code path. I manually created the .secrets file during testing.
+    // I did verify that update_stack.js successfully reads the manually created .secrets file.
+    await writeFile(`.secrets.${StackName}`, `URI_ENCODED_PRIVATE_KEY=${uriEncodedPrivateKey}\nBASE64_ENCRYPTION_KEY=${encryptionKey}`)
     const publicKey = await genPublicKey(privateKey)
-    const Parameters = await getParams(uriEncodedPrivateKey, publicKey)
+    const Parameters = await getParams(uriEncodedPrivateKey, publicKey, encryptionKey)
 
     return await cloudFormation.createStack({
       StackName,

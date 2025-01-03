@@ -1,0 +1,48 @@
+---
+---
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+  <head>
+    <title>{{ site.title }}</title>
+    <link rel="stylesheet" href="{{ '/assets/stylesheets/main.css' | relative_url }}">
+    <link href="https://vjs.zencdn.net/8.16.1/video-js.css" rel="stylesheet" />
+    {% if page.image %}
+      <meta property="og:image" content="/assets/images/processed/{{ page.image | replace: ".jpg", "_300x300.jpg" }}">
+    {% endif %}
+    {% if page.label %}
+      <meta property="og:title" content="{{ page.label }}">
+    {% endif %}
+  </head>
+
+  <body>
+
+    <template id="access-denied-anonymous-template">
+      <div class="unauth-message">
+        <p>Hi!</p>
+        <p>These videos are for my family and friends.</p>
+        <p>Please reach out if you would like access.</p>
+        <p class="unauth-message__small">
+          I must enable access for you. Then you will be able to login.
+        </p>
+      </div>
+    </template>
+
+    <template id="access-denied-user-template">
+      <div class="unauth-message unknown-message">
+        <p>Hi <span id="unauth-message__name"></span>!</p>
+        <p>I have been notified that you would like to view this site.</p>
+        <p>After I enable access for you, I will send you an email.</p>
+      </div>
+    </template>
+
+    <div class='site-layout'>
+      {% include header.html %}
+
+      <main>
+        {{ content }}
+      </main>
+    </div>
+
+  </body>
+
+</html>

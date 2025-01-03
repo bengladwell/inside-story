@@ -36,6 +36,7 @@ function putBucketPolicy (policy) {
 }
 
 function hasRule (rules) {
+  console.dir(rules, { depth: null })
   return rules.CORSRules.find((rule) =>
     rule.AllowedOrigins.includes(`https://${process.env.SITE_DOMAIN}`))
 }
@@ -67,6 +68,7 @@ async function removeBucketPolicyStatement () {
   }
   const bucketPolicyString = await s3.getBucketPolicy({ Bucket: videoAssetBucket })
   const bucketPolicy = JSON.parse(bucketPolicyString.Policy)
+  console.dir(bucketPolicy, { depth: null })
 
   if (!bucketPolicy.Statement.find(s => _.isEqual(s, statement))) {
     console.log('Policy statement does not exist; skipping')

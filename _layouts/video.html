@@ -1,0 +1,23 @@
+---
+layout: default
+---
+<h1>{{ page.label }}</h1>
+<div data-vjs-player>
+  <video
+    class="video-js vjs-fluid vjs-16-9"
+    controls
+    poster="/assets/images/processed/{{ page.image | replace: ".jpg", "_800w.jpg" }}"
+    data-setup='{"html5": {"vhs": {"withCredentials": true}}}'
+  >
+    <source
+      src="https://{{ site.video_domain }}/{{ page.base_name }}/hls/{{ page.base_name }}.m3u8"
+      type="application/x-mpegURL"
+    />
+    <source
+      src="https://{{ site.video_domain }}/{{ page.base_name }}/dash/{{ page.base_name }}.mpd"
+      type="application/dash+xml"
+    />
+  </video>
+</div>
+
+<script src="https://vjs.zencdn.net/8.16.1/video.min.js"></script>
